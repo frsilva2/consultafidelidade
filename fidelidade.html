@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Saldo - Empório Tecidos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --rosa: #EE2B68;
+            --azul: #2F3685;
+            --rosa-claro: #FFDCEA;
+        }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, var(--rosa-claro) 0%, #fff 50%, var(--rosa-claro) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container { width: 100%; max-width: 800px; text-align: center; }
+        .logo { width: 280px; margin-bottom: 15px; }
+        .welcome { color: var(--azul); font-size: 1.8rem; font-weight: 700; }
+        .subtitle { color: var(--rosa); font-size: 1.3rem; font-weight: 600; margin-bottom: 30px; }
+        
+        .screen { display: none; animation: fadeIn 0.3s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 8px 30px rgba(47,54,133,0.12);
+        }
+        .input-label { color: var(--azul); font-size: 1.4rem; font-weight: 700; margin-bottom: 15px; display: block; }
+        .cpf-input {
+            width: 100%; max-width: 400px;
+            padding: 18px; font-size: 2rem; font-weight: 700;
+            text-align: center; border: 3px solid var(--rosa-claro);
+            border-radius: 12px; color: var(--azul); letter-spacing: 3px;
+        }
+        .cpf-input:focus { outline: none; border-color: var(--rosa); }
+        
+        .numpad {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; max-width: 350px; margin: 25px auto 0;
+        }
+        .num-btn {
+            padding: 22px; font-size: 1.8rem; font-weight: 700;
+            border: none; border-radius: 12px; cursor: pointer;
+            background: var(--azul); color: #fff;
+        }
+        .num-btn:active { transform: scale(0.95); }
+        .num-btn.clear { background: #888; }
+        .num-btn.back { background: var(--rosa); }
+        
+        .btn-main {
+            width: 100%; max-width: 400px;
+            padding: 20px; font-size: 1.4rem; font-weight: 800;
+            border: none; border-radius: 12px; cursor: pointer;
+            background: var(--rosa); color: #fff;
+            margin-top: 25px; text-transform: uppercase;
+        }
+        .btn-main:disabled { background: #ccc; }
+        
+        .greeting { color: var(--azul); font-size: 1.5rem; font-weight: 600; }
+        .customer-name { color: var(--rosa); font-size: 2rem; font-weight: 800; margin-bottom: 25px; }
+        .balance-box {
+            background: linear-gradient(135deg, var(--rosa), #ff6b9d);
+            border-radius: 16px; padding: 25px; margin-bottom: 20px;
+        }
+        .balance-label { color: rgba(255,255,255,0.9); font-size: 1.2rem; }
+        .balance-value { color: #fff; font-size: 3.5rem; font-weight: 800; }
+        .expiry-box {
+            background: var(--rosa-claro); border-radius: 12px;
+            padding: 18px; margin-bottom: 25px;
+        }
+        .expiry-label { color: var(--azul); font-size: 1.1rem; }
+        .expiry-value { color: var(--rosa); font-size: 1.6rem; font-weight: 800; }
+        .expiry-warning { color: #c00; font-weight: 700; margin-top: 8px; }
+        
+        .phone-box {
+            background: #f5f5f5; border-radius: 12px;
+            padding: 20px; margin-bottom: 25px; border: 2px dashed var(--azul);
+        }
+        .phone-label { color: var(--azul); font-size: 1rem; margin-bottom: 10px; }
+        .phone-display { font-size: 1.3rem; font-weight: 700; color: #555; }
+        .phone-input {
+            width: 100%; max-width: 300px;
+            padding: 12px; font-size: 1.3rem; font-weight: 700;
+            text-align: center; border: 2px solid var(--azul);
+            border-radius: 10px; margin: 10px 0;
+        }
+        .btn-phone {
+            padding: 12px 25px; font-size: 1rem; font-weight: 700;
+            border: none; border-radius: 10px; cursor: pointer; margin: 5px;
+        }
+        .btn-edit { background: var(--azul); color: #fff; }
+        .btn-save { background: #28a745; color: #fff; }
+        .btn-cancel { background: #888; color: #fff; }
+        .phone-success { color: #28a745; font-weight: 700; margin-top: 10px; display: none; }
+        .hidden { display: none; }
+        
+        .btn-end {
+            padding: 18px 45px; font-size: 1.3rem; font-weight: 800;
+            border: none; border-radius: 12px; cursor: pointer;
+            background: var(--azul); color: #fff; text-transform: uppercase;
+        }
+        
+        .timer-bar {
+            position: fixed; bottom: 0; left: 0; height: 6px;
+            background: var(--rosa); transition: width 1s linear;
+        }
+        .timer-text {
+            position: fixed; bottom: 15px; right: 15px;
+            background: var(--azul); color: #fff;
+            padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;
+        }
+        
+        .error-icon { font-size: 4rem; margin-bottom: 15px; }
+        .error-title { color: var(--rosa); font-size: 1.6rem; font-weight: 800; margin-bottom: 10px; }
+        .error-msg { color: var(--azul); font-size: 1.3rem; margin-bottom: 25px; }
+        
+        .spinner {
+            width: 60px; height: 60px;
+            border: 6px solid var(--rosa-claro); border-top-color: var(--rosa);
+            border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--azul); font-size: 1.3rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <svg class="logo" viewBox="0 0 422 95" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M148.096 14.696V20.216H158.896V27.368H148.096V33.464H160.336V41H138.688V7.16H160.336V14.696H148.096Z" fill="#23278C"/>
+            <path d="M199.209 13.832C202.601 13.832 205.257 14.856 207.177 16.904C209.129 18.952 210.105 21.752 210.105 25.304V41H200.697V26.552C200.697 25.112 200.297 23.992 199.497 23.192C198.697 22.392 197.609 21.992 196.233 21.992C194.857 21.992 193.769 22.392 192.969 23.192C192.169 23.992 191.769 25.112 191.769 26.552V41H182.361V26.552C182.361 25.112 181.961 23.992 181.161 23.192C180.393 22.392 179.321 21.992 177.945 21.992C176.537 21.992 175.433 22.392 174.633 23.192C173.833 23.992 173.433 25.112 173.433 26.552V41H164.025V14.072H173.433V17.624C174.265 16.472 175.337 15.56 176.649 14.888C177.993 14.184 179.529 13.832 181.257 13.832C183.241 13.832 185.001 14.264 186.537 15.128C188.105 15.992 189.337 17.208 190.233 18.776C191.193 17.304 192.457 16.12 194.025 15.224C195.593 14.296 197.321 13.832 199.209 13.832Z" fill="#23278C"/>
+            <path d="M223.707 17.816C224.443 16.568 225.483 15.576 226.827 14.84C228.171 14.104 229.755 13.736 231.579 13.736C233.723 13.736 235.659 14.296 237.387 15.416C239.147 16.536 240.523 18.136 241.515 20.216C242.539 22.296 243.051 24.728 243.051 27.512C243.051 30.296 242.539 32.744 241.515 34.856C240.523 36.936 239.147 38.536 237.387 39.656C235.659 40.776 233.723 41.336 231.579 41.336C229.755 41.336 228.171 40.968 226.827 40.232C225.515 39.496 224.475 38.504 223.707 37.256V53.864H214.299V14.072H223.707V17.816ZM233.499 27.512C233.499 25.752 233.019 24.392 232.059 23.432C231.131 22.44 229.979 21.944 228.603 21.944C227.227 21.944 226.059 22.44 225.099 23.432C224.171 24.424 223.707 25.784 223.707 27.512C223.707 29.272 224.171 30.648 225.099 31.64C226.059 32.632 227.227 33.128 228.603 33.128C229.979 33.128 231.131 32.632 232.059 31.64C233.019 30.616 233.499 29.24 233.499 27.512Z" fill="#23278C"/>
+            <path d="M258.492 41.336C255.804 41.336 253.388 40.776 251.244 39.656C249.132 38.536 247.468 36.936 246.252 34.856C245.036 32.776 244.428 30.328 244.428 27.512C244.428 24.728 245.036 22.296 246.252 20.216C247.5 18.136 249.18 16.536 251.292 15.416C253.436 14.296 255.852 13.736 258.54 13.736C261.228 13.736 263.628 14.296 265.74 15.416C267.884 16.536 269.564 18.136 270.78 20.216C272.028 22.296 272.652 24.728 272.652 27.512C272.652 30.296 272.028 32.744 270.78 34.856C269.564 36.936 267.884 38.536 265.74 39.656C263.596 40.776 261.18 41.336 258.492 41.336ZM258.492 33.176C259.804 33.176 260.892 32.696 261.756 31.736C262.652 30.744 263.1 29.336 263.1 27.512C263.1 25.688 262.652 24.296 261.756 23.336C260.892 22.376 259.82 21.896 258.54 21.896C257.26 21.896 256.188 22.376 255.324 23.336C254.46 24.296 254.028 25.688 254.028 27.512C254.028 29.368 254.444 30.776 255.276 31.736C256.108 32.696 257.18 33.176 258.492 33.176ZM265.308 7.448L253.308 12.152V5.76799L265.308 0.343994V7.448Z" fill="#23278C"/>
+            <path d="M284.928 18.824C285.984 17.288 287.264 16.072 288.768 15.176C290.272 14.28 291.888 13.832 293.616 13.832V23.864H290.976C288.928 23.864 287.408 24.264 286.416 25.064C285.424 25.864 284.928 27.256 284.928 29.24V41H275.52V14.072H284.928V18.824Z" fill="#23278C"/>
+            <path d="M300.781 11.576C299.117 11.576 297.773 11.128 296.749 10.232C295.757 9.304 295.261 8.152 295.261 6.77599C295.261 5.368 295.757 4.2 296.749 3.272C297.773 2.344 299.117 1.87999 300.781 1.87999C302.413 1.87999 303.725 2.344 304.717 3.272C305.741 4.2 306.253 5.368 306.253 6.77599C306.253 8.152 305.741 9.304 304.717 10.232C303.725 11.128 302.413 11.576 300.781 11.576ZM305.437 14.072V41H296.029V14.072H305.437Z" fill="#23278C"/>
+            <path d="M322.362 41.336C319.674 41.336 317.258 40.776 315.114 39.656C313.002 38.536 311.338 36.936 310.122 34.856C308.906 32.776 308.298 30.328 308.298 27.512C308.298 24.728 308.906 22.296 310.122 20.216C311.37 18.136 313.05 16.536 315.162 15.416C317.306 14.296 319.722 13.736 322.41 13.736C325.098 13.736 327.498 14.296 329.61 15.416C331.754 16.536 333.434 18.136 334.65 20.216C335.898 22.296 336.522 24.728 336.522 27.512C336.522 30.296 335.898 32.744 334.65 34.856C333.434 36.936 331.754 38.536 329.61 39.656C327.466 40.776 325.05 41.336 322.362 41.336ZM322.362 33.176C323.674 33.176 324.762 32.696 325.626 31.736C326.522 30.744 326.97 29.336 326.97 27.512C326.97 25.688 326.522 24.296 325.626 23.336C324.762 22.376 323.69 21.896 322.41 21.896C321.13 21.896 320.058 22.376 319.194 23.336C318.33 24.296 317.898 25.688 317.898 27.512C317.898 29.368 318.314 30.776 319.146 31.736C319.978 32.696 321.05 33.176 322.362 33.176Z" fill="#23278C"/>
+            <path d="M338.478 27.656C338.478 25 339.022 22.648 340.11 20.6C341.23 18.552 342.734 16.968 344.622 15.848C346.542 14.696 348.67 14.12 351.006 14.12C352.734 14.12 354.43 14.504 356.094 15.272C357.79 16.008 359.134 17 360.126 18.248V5.48H365.646V41H360.126V37.016C359.23 38.296 357.982 39.352 356.382 40.184C354.814 41.016 353.006 41.432 350.958 41.432C348.654 41.432 346.542 40.856 344.622 39.704C342.734 38.52 341.23 36.888 340.11 34.808C339.022 32.696 338.478 30.312 338.478 27.656ZM360.126 27.752C360.126 25.928 359.742 24.344 358.974 23C358.238 21.656 357.262 20.632 356.046 19.928C354.83 19.224 353.518 18.872 352.11 18.872C350.702 18.872 349.39 19.224 348.174 19.928C346.958 20.6 345.966 21.608 345.198 22.952C344.462 24.264 344.094 25.832 344.094 27.656C344.094 29.48 344.462 31.08 345.198 32.456C345.966 33.832 346.958 34.888 348.174 35.624C349.422 36.328 350.734 36.68 352.11 36.68C353.518 36.68 354.83 36.328 356.046 35.624C357.262 34.92 358.238 33.896 358.974 32.552C359.742 31.176 360.126 29.576 360.126 27.752Z" fill="#23278C"/>
+            <path d="M383.345 41.432C380.849 41.432 378.593 40.872 376.577 39.752C374.561 38.6 372.977 37 371.825 34.952C370.673 32.872 370.097 30.472 370.097 27.752C370.097 25.064 370.689 22.68 371.873 20.6C373.057 18.52 374.673 16.92 376.721 15.8C378.769 14.68 381.057 14.12 383.585 14.12C386.113 14.12 388.401 14.68 390.449 15.8C392.497 16.92 394.113 18.52 395.297 20.6C396.481 22.68 397.073 25.064 397.073 27.752C397.073 30.44 396.465 32.824 395.249 34.904C394.033 36.984 392.369 38.6 390.257 39.752C388.177 40.872 385.873 41.432 383.345 41.432ZM383.345 36.68C384.753 36.68 386.065 36.344 387.281 35.672C388.529 35 389.537 33.992 390.305 32.648C391.073 31.304 391.457 29.672 391.457 27.752C391.457 25.832 391.089 24.216 390.353 22.904C389.617 21.56 388.641 20.552 387.425 19.88C386.209 19.208 384.897 18.872 383.489 18.872C382.081 18.872 380.769 19.208 379.553 19.88C378.369 20.552 377.425 21.56 376.721 22.904C376.017 24.216 375.665 25.832 375.665 27.752C375.665 30.6 376.385 32.808 377.825 34.376C379.297 35.912 381.137 36.68 383.345 36.68Z" fill="#23278C"/>
+            <path d="M411.122 41.432C409.042 41.432 407.171 41.064 405.507 40.328C403.875 39.56 402.578 38.536 401.618 37.256C400.658 35.944 400.146 34.488 400.082 32.888H405.746C405.842 34.008 406.37 34.952 407.33 35.72C408.322 36.456 409.554 36.824 411.026 36.824C412.562 36.824 413.746 36.536 414.578 35.96C415.442 35.352 415.874 34.584 415.874 33.656C415.874 32.664 415.394 31.928 414.434 31.448C413.506 30.968 412.018 30.44 409.97 29.864C407.986 29.32 406.37 28.792 405.122 28.28C403.874 27.768 402.786 26.984 401.858 25.928C400.962 24.872 400.514 23.48 400.514 21.752C400.514 20.344 400.93 19.064 401.762 17.912C402.594 16.728 403.778 15.8 405.314 15.128C406.882 14.456 408.674 14.12 410.69 14.12C413.698 14.12 416.114 14.888 417.938 16.424C419.794 17.928 420.786 19.992 420.914 22.616H415.442C415.346 21.432 414.866 20.488 414.002 19.784C413.138 19.08 411.97 18.728 410.498 18.728C409.058 18.728 407.954 19 407.186 19.544C406.418 20.088 406.034 20.808 406.034 21.704C406.034 22.408 406.29 23 406.802 23.48C407.314 23.96 407.938 24.344 408.674 24.632C409.41 24.888 410.498 25.224 411.938 25.64C413.858 26.152 415.426 26.68 416.642 27.224C417.89 27.736 418.962 28.504 419.858 29.528C420.754 30.552 421.218 31.912 421.25 33.608C421.25 35.112 420.834 36.456 420.002 37.64C419.17 38.824 417.987 39.752 416.451 40.424C414.947 41.096 413.17 41.432 411.122 41.432Z" fill="#23278C"/>
+            <path d="M171.046 53.11V62.158H160.142V94H148.774V62.158H137.986V53.11H171.046Z" fill="#23278C"/>
+            <path d="M205.18 77.354C205.18 78.2433 205.122 79.1327 205.006 80.022H183.488C183.604 81.8007 184.087 83.1346 184.938 84.024C185.827 84.8746 186.949 85.3 188.302 85.3C190.197 85.3 191.55 84.4493 192.362 82.748H204.484C203.981 84.9907 202.995 87.0013 201.526 88.78C200.095 90.52 198.278 91.8927 196.074 92.898C193.87 93.9033 191.434 94.406 188.766 94.406C185.557 94.406 182.695 93.7293 180.182 92.376C177.707 91.0227 175.755 89.0893 174.324 86.576C172.932 84.0627 172.236 81.1047 172.236 77.702C172.236 74.2993 172.932 71.3606 174.324 68.886C175.716 66.3726 177.649 64.4393 180.124 63.086C182.637 61.7327 185.518 61.056 188.766 61.056C191.975 61.056 194.817 61.7133 197.292 63.028C199.767 64.3426 201.7 66.2373 203.092 68.712C204.484 71.148 205.18 74.0287 205.18 77.354ZM193.58 74.512C193.58 73.12 193.116 72.0373 192.188 71.264C191.26 70.452 190.1 70.046 188.708 70.046C187.316 70.046 186.175 70.4327 185.286 71.206C184.397 71.9407 183.817 73.0426 183.546 74.512H193.58Z" fill="#23278C"/>
+            <path d="M206.816 77.702C206.816 74.338 207.512 71.3993 208.904 68.886C210.296 66.3726 212.229 64.4393 214.704 63.086C217.217 61.7327 220.079 61.056 223.288 61.056C227.425 61.056 230.905 62.1967 233.728 64.478C236.551 66.7207 238.368 69.872 239.18 73.932H227.116C226.42 71.8053 225.067 70.742 223.056 70.742C221.625 70.742 220.485 71.3413 219.634 72.54C218.822 73.7 218.416 75.4207 218.416 77.702C218.416 79.9833 218.822 81.7233 219.634 82.922C220.485 84.1207 221.625 84.72 223.056 84.72C225.105 84.72 226.459 83.6566 227.116 81.53H239.18C238.368 85.5513 236.551 88.7027 233.728 90.984C230.905 93.2653 227.425 94.406 223.288 94.406C220.079 94.406 217.217 93.7293 214.704 92.376C212.229 91.0227 210.296 89.0893 208.904 86.576C207.512 84.0627 206.816 81.1047 206.816 77.702Z" fill="#23278C"/>
+            <path d="M248.485 58.446C246.474 58.446 244.85 57.9046 243.613 56.822C242.414 55.7007 241.815 54.3086 241.815 52.646C241.815 50.9446 242.414 49.5333 243.613 48.412C244.85 47.2906 246.474 46.73 248.485 46.73C250.457 46.73 252.042 47.2906 253.241 48.412C254.478 49.5333 255.097 50.9446 255.097 52.646C255.097 54.3086 254.478 55.7007 253.241 56.822C252.042 57.9046 250.457 58.446 248.485 58.446ZM254.111 61.462V94H242.743V61.462H254.111Z" fill="#23278C"/>
+            <path d="M257.568 77.702C257.568 74.338 258.168 71.3993 259.366 68.886C260.604 66.3726 262.286 64.4393 264.412 63.086C266.539 61.7327 268.898 61.056 271.488 61.056C273.576 61.056 275.432 61.5007 277.056 62.39C278.719 63.2407 280.014 64.42 280.942 65.928V51.08H292.368V94H280.942V89.476C280.053 90.984 278.796 92.1827 277.172 93.072C275.548 93.9613 273.634 94.406 271.43 94.406C268.84 94.406 266.481 93.7293 264.354 92.376C262.266 91.0227 260.604 89.0893 259.366 86.576C258.168 84.024 257.568 81.066 257.568 77.702ZM281 77.702C281 75.614 280.42 73.9707 279.26 72.772C278.139 71.5733 276.747 70.974 275.084 70.974C273.383 70.974 271.972 71.5733 270.85 72.772C269.729 73.932 269.168 75.5753 269.168 77.702C269.168 79.79 269.729 81.4526 270.85 82.69C271.972 83.8887 273.383 84.488 275.084 84.488C276.747 84.488 278.139 83.8887 279.26 82.69C280.42 81.4913 281 79.8287 281 77.702Z" fill="#23278C"/>
+            <path d="M312.824 94.406C309.576 94.406 306.657 93.7293 304.066 92.376C301.514 91.0227 299.504 89.0893 298.034 86.576C296.565 84.0627 295.83 81.1047 295.83 77.702C295.83 74.338 296.565 71.3993 298.034 68.886C299.542 66.3726 301.572 64.4393 304.124 63.086C306.715 61.7327 309.634 61.056 312.882 61.056C316.13 61.056 319.03 61.7327 321.582 63.086C324.173 64.4393 326.203 66.3726 327.672 68.886C329.18 71.3993 329.934 74.338 329.934 77.702C329.934 81.066 329.18 84.024 327.672 86.576C326.203 89.0893 324.173 91.0227 321.582 92.376C318.992 93.7293 316.072 94.406 312.824 94.406ZM312.824 84.546C314.41 84.546 315.724 83.966 316.768 82.806C317.851 81.6073 318.392 79.906 318.392 77.702C318.392 75.498 317.851 73.816 316.768 72.656C315.724 71.496 314.429 70.916 312.882 70.916C311.336 70.916 310.04 71.496 308.996 72.656C307.952 73.816 307.43 75.498 307.43 77.702C307.43 79.9447 307.933 81.646 308.938 82.806C309.944 83.966 311.239 84.546 312.824 84.546Z" fill="#23278C"/>
+            <path d="M347.261 94.406C344.323 94.406 341.693 93.9227 339.373 92.956C337.092 91.9507 335.275 90.5973 333.921 88.896C332.607 87.156 331.872 85.2033 331.717 83.038H342.737C342.892 84.082 343.375 84.894 344.187 85.474C344.999 86.054 346.005 86.344 347.203 86.344C348.131 86.344 348.866 86.1507 349.407 85.764C349.949 85.3773 350.219 84.8747 350.219 84.256C350.219 83.444 349.775 82.8447 348.885 82.458C347.996 82.0713 346.527 81.646 344.477 81.182C342.157 80.718 340.224 80.196 338.677 79.616C337.131 79.036 335.777 78.0886 334.617 76.774C333.496 75.4593 332.935 73.6807 332.935 71.438C332.935 69.5047 333.457 67.7647 334.501 66.218C335.545 64.6326 337.073 63.376 339.083 62.448C341.133 61.52 343.588 61.056 346.449 61.056C350.703 61.056 354.047 62.1 356.483 64.188C358.919 66.276 360.331 69.0213 360.717 72.424H350.451C350.258 71.38 349.794 70.5873 349.059 70.046C348.363 69.466 347.416 69.176 346.217 69.176C345.289 69.176 344.574 69.35 344.071 69.698C343.607 70.046 343.375 70.5293 343.375 71.148C343.375 71.9213 343.82 72.5207 344.709 72.946C345.599 73.3327 347.029 73.7387 349.001 74.164C351.36 74.6667 353.313 75.2273 354.859 75.846C356.445 76.4646 357.817 77.47 358.977 78.862C360.176 80.2153 360.775 82.0713 360.775 84.43C360.775 86.3247 360.215 88.026 359.093 89.534C358.011 91.042 356.445 92.2407 354.395 93.13C352.385 93.9807 350.007 94.406 347.261 94.406Z" fill="#23278C"/>
+            <path d="M119.6 26.8865C119.6 17.8098 110.523 9.93437 100.111 9.53393C100.111 9.53393 89.0323 8.33259 85.6952 9.53393C82.4917 10.6018 6.67408 35.9633 6.67408 35.9633C2.40267 37.9655 0.133482 40.2347 0 43.7052C0 54.5172 6.27364 55.1847 12.8142 55.1847L94.505 52.2481C99.3103 52.1146 102.647 49.0445 102.647 44.5061V31.2914C102.647 25.0178 94.3715 24.3504 93.8376 30.2236L92.9032 32.2258C92.9032 38.4994 85.1613 38.4994 85.1613 32.0923V27.1535C85.1613 23.2825 88.7653 19.0111 93.4372 19.4116L101.713 19.5451C106.919 19.9455 111.858 22.3482 111.858 30.0901V52.3815C111.858 57.1869 107.853 60.257 102.647 60.1235L12.4138 60.6574L12.5473 69.8676V79.8788L13.6151 77.6096L15.6174 80.4127L16.8187 78.01L18.9544 80.8131L20.2892 78.277L22.5584 81.2136L24.0267 78.5439L26.4294 81.614L28.0311 78.9444L30.7008 82.1479L32.436 79.3448L35.2392 82.6819L37.1079 79.7453L40.178 83.3493L42.3137 80.2792L45.6507 84.0167L48.0534 80.8131L51.6574 84.6841L54.327 81.3471L58.3315 85.485L61.2681 82.0145L65.673 86.4194L69.01 82.8153L73.9488 87.4872L77.6863 83.6162L83.1591 88.6885L87.564 84.6841L93.8376 90.0234L98.9099 85.752L105.984 91.6251L111.858 87.0868L120 93.3604L119.6 26.8865Z" fill="#E63768"/>
+        </svg>
+        <div class="welcome">Bem-vinda ao Empório Tecidos!</div>
+        <div class="subtitle">Confira seu saldo agora mesmo!</div>
+
+        <div id="screenInput" class="screen active">
+            <div class="card">
+                <label class="input-label">Digite seu CPF:</label>
+                <input type="text" id="cpfInput" class="cpf-input" placeholder="000.000.000-00" readonly>
+                <div class="numpad">
+                    <button class="num-btn" onclick="addDigit('1')">1</button>
+                    <button class="num-btn" onclick="addDigit('2')">2</button>
+                    <button class="num-btn" onclick="addDigit('3')">3</button>
+                    <button class="num-btn" onclick="addDigit('4')">4</button>
+                    <button class="num-btn" onclick="addDigit('5')">5</button>
+                    <button class="num-btn" onclick="addDigit('6')">6</button>
+                    <button class="num-btn" onclick="addDigit('7')">7</button>
+                    <button class="num-btn" onclick="addDigit('8')">8</button>
+                    <button class="num-btn" onclick="addDigit('9')">9</button>
+                    <button class="num-btn clear" onclick="clearCpf()">C</button>
+                    <button class="num-btn" onclick="addDigit('0')">0</button>
+                    <button class="num-btn back" onclick="backspace()">⌫</button>
+                </div>
+                <button id="btnConsultar" class="btn-main" onclick="consultar()" disabled>CONSULTAR SALDO</button>
+            </div>
+        </div>
+
+        <div id="screenLoading" class="screen">
+            <div class="card">
+                <div class="spinner"></div>
+                <div class="loading-text">Buscando seus dados...</div>
+            </div>
+        </div>
+
+        <div id="screenResult" class="screen">
+            <div class="card">
+                <div class="greeting">Olá,</div>
+                <div class="customer-name" id="customerName"></div>
+                <div class="balance-box">
+                    <div class="balance-label">Seu saldo disponível:</div>
+                    <div class="balance-value" id="balanceValue"></div>
+                </div>
+                <div class="expiry-box">
+                    <div class="expiry-label">Válido até:</div>
+                    <div class="expiry-value" id="expiryDate"></div>
+                    <div class="expiry-warning" id="expiryWarning"></div>
+                </div>
+                <div class="phone-box">
+                    <div class="phone-label">Seu telefone cadastrado:</div>
+                    <div id="phoneView">
+                        <div class="phone-display" id="phoneDisplay"></div>
+                        <button class="btn-phone btn-edit" onclick="showPhoneEdit()">Atualizar Telefone</button>
+                    </div>
+                    <div id="phoneEdit" class="hidden">
+                        <input type="tel" id="phoneInput" class="phone-input" placeholder="(31) 99999-9999" maxlength="15">
+                        <div>
+                            <button class="btn-phone btn-save" onclick="savePhone()">Salvar</button>
+                            <button class="btn-phone btn-cancel" onclick="cancelPhoneEdit()">Cancelar</button>
+                        </div>
+                        <div class="phone-success" id="phoneSuccess">✓ Telefone atualizado!</div>
+                    </div>
+                </div>
+                <button class="btn-end" onclick="encerrar()">ENCERRAR CONSULTA</button>
+            </div>
+            <div class="timer-bar" id="timerBar"></div>
+            <div class="timer-text" id="timerText"></div>
+        </div>
+
+        <div id="screenError" class="screen">
+            <div class="card">
+                <div class="error-icon">😕</div>
+                <div class="error-title">CPF não encontrado</div>
+                <div class="error-msg">Dirija-se ao caixa, por gentileza.</div>
+                <button class="btn-end" onclick="encerrar()">VOLTAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-dZZ8NwD0OBeTElWMV_6Bgjc4FOQIEr89OopYJyfckhGWmcRVIbcU4Xo5TPODOA/pub?output=csv';
+        
+        let customers = [];
+        let currentCustomer = null;
+        let cpfDigits = '';
+        let timerInterval = null;
+        let timeLeft = 90;
+
+        window.onload = () => loadData();
+
+        async function loadData() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const csv = await response.text();
+                customers = parseCSV(csv);
+                console.log('Carregados:', customers.length, 'clientes');
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = parseCSVLine(lines[i].trim());
+                if (cols.length >= 6) {
+                    result.push({
+                        cpf: String(cols[0]).replace(/\D/g, '').padStart(11, '0'),
+                        nome: cols[1],
+                        telefone: cols[3],
+                        saldo: parseFloat(cols[4]) || 0,
+                        vencimento: cols[5],
+                        diasExp: parseInt(cols[6]) || 0
+                    });
+                }
+            }
+            return result;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (const char of line) {
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+                else current += char;
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function addDigit(d) { if (cpfDigits.length < 11) { cpfDigits += d; updateDisplay(); } }
+        function backspace() { cpfDigits = cpfDigits.slice(0, -1); updateDisplay(); }
+        function clearCpf() { cpfDigits = ''; updateDisplay(); }
+
+        function updateDisplay() {
+            let f = cpfDigits;
+            if (f.length > 3) f = f.slice(0,3) + '.' + f.slice(3);
+            if (f.length > 7) f = f.slice(0,7) + '.' + f.slice(7);
+            if (f.length > 11) f = f.slice(0,11) + '-' + f.slice(11);
+            document.getElementById('cpfInput').value = f;
+            document.getElementById('btnConsultar').disabled = cpfDigits.length !== 11;
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function consultar() {
+            showScreen('screenLoading');
+            await loadData();
+            
+            const cpfLimpo = cpfDigits.replace(/^0+/, '');
+            currentCustomer = customers.find(c => c.cpf === cpfDigits || c.cpf.replace(/^0+/, '') === cpfLimpo);
+
+            setTimeout(() => {
+                if (currentCustomer) showResult();
+                else showScreen('screenError');
+            }, 800);
+        }
+
+        function showResult() {
+            document.getElementById('customerName').textContent = currentCustomer.nome;
+            document.getElementById('balanceValue').textContent = 'R$ ' + currentCustomer.saldo.toFixed(2).replace('.', ',');
+            
+            let data = currentCustomer.vencimento;
+            if (data.includes(' ')) data = data.split(' ')[0];
+            document.getElementById('expiryDate').textContent = data;
+            
+            const warn = document.getElementById('expiryWarning');
+            if (currentCustomer.diasExp <= 7) {
+                warn.textContent = '⚠️ Atenção: Vence em ' + currentCustomer.diasExp + ' dia(s)!';
+                warn.style.display = 'block';
+            } else warn.style.display = 'none';
+            
+            document.getElementById('phoneDisplay').textContent = currentCustomer.telefone ? formatPhone(currentCustomer.telefone) : 'Não cadastrado';
+            document.getElementById('phoneView').classList.remove('hidden');
+            document.getElementById('phoneEdit').classList.add('hidden');
+            document.getElementById('phoneSuccess').style.display = 'none';
+            
+            showScreen('screenResult');
+            startTimer();
+        }
+
+        function formatPhone(p) {
+            const d = String(p).replace(/\D/g, '');
+            return d.length === 11 ? '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7) : p;
+        }
+
+        function showPhoneEdit() {
+            document.getElementById('phoneView').classList.add('hidden');
+            document.getElementById('phoneEdit').classList.remove('hidden');
+            resetTimer();
+        }
+
+        function cancelPhoneEdit() {
+            document.getElementById('phoneView').classList.remove('hidden');
+            document.getElementById('phoneEdit').classList.add('hidden');
+        }
+
+        function savePhone() {
+            const newPhone = document.getElementById('phoneInput').value.replace(/\D/g, '');
+            if (newPhone.length < 10) { alert('Digite um telefone válido'); return; }
+
+            const updates = JSON.parse(localStorage.getItem('phoneUpdates') || '[]');
+            updates.push({ cpf: currentCustomer.cpf, nome: currentCustomer.nome, telefoneNovo: newPhone, data: new Date().toISOString() });
+            localStorage.setItem('phoneUpdates', JSON.stringify(updates));
+
+            document.getElementById('phoneDisplay').textContent = formatPhone(newPhone);
+            document.getElementById('phoneSuccess').style.display = 'block';
+            setTimeout(cancelPhoneEdit, 1500);
+            resetTimer();
+        }
+
+        function startTimer() {
+            timeLeft = 90;
+            updateTimer();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => { timeLeft--; updateTimer(); if (timeLeft <= 0) encerrar(); }, 1000);
+        }
+
+        function resetTimer() { timeLeft = 90; updateTimer(); }
+        function updateTimer() {
+            document.getElementById('timerBar').style.width = (timeLeft / 90 * 100) + '%';
+            document.getElementById('timerText').textContent = 'Encerra em ' + timeLeft + 's';
+        }
+
+        function encerrar() {
+            if (timerInterval) clearInterval(timerInterval);
+            cpfDigits = '';
+            currentCustomer = null;
+            updateDisplay();
+            showScreen('screenInput');
+        }
+
+        window.getPhoneUpdates = () => JSON.parse(localStorage.getItem('phoneUpdates') || '[]');
+    </script>
+</body>
+</html>
