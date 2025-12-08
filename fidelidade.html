@@ -103,6 +103,11 @@
         .btn-save { background: #28a745; color: #fff; }
         .btn-cancel { background: #888; color: #fff; }
         .phone-success { color: #28a745; font-weight: 700; margin-top: 10px; display: none; }
+        .phone-alert {
+            background: #fff3cd; border: 2px solid #ffc107;
+            color: #856404; padding: 12px; border-radius: 8px;
+            margin-bottom: 10px; font-weight: 700;
+        }
         .hidden { display: none; }
         
         .btn-end {
@@ -202,6 +207,7 @@
                     <div class="expiry-warning" id="expiryWarning"></div>
                 </div>
                 <div class="phone-box">
+                    <div class="phone-alert hidden" id="phoneAlert">⚠️ Telefone não cadastrado! Por favor, atualize seus dados.</div>
                     <div class="phone-label">Seu telefone cadastrado:</div>
                     <div id="phoneView">
                         <div class="phone-display" id="phoneDisplay"></div>
@@ -331,7 +337,9 @@
                 warn.style.display = 'block';
             } else warn.style.display = 'none';
             
-            document.getElementById('phoneDisplay').textContent = currentCustomer.telefone ? formatPhone(currentCustomer.telefone) : 'Não cadastrado';
+            const temTelefone = currentCustomer.telefone && currentCustomer.telefone.trim() !== '';
+            document.getElementById('phoneDisplay').textContent = temTelefone ? formatPhone(currentCustomer.telefone) : 'Não cadastrado';
+            document.getElementById('phoneAlert').classList.toggle('hidden', temTelefone);
             document.getElementById('phoneView').classList.remove('hidden');
             document.getElementById('phoneEdit').classList.add('hidden');
             document.getElementById('phoneSuccess').style.display = 'none';
@@ -365,6 +373,7 @@
             localStorage.setItem('phoneUpdates', JSON.stringify(updates));
 
             document.getElementById('phoneDisplay').textContent = formatPhone(newPhone);
+            document.getElementById('phoneAlert').classList.add('hidden');
             document.getElementById('phoneSuccess').style.display = 'block';
             setTimeout(cancelPhoneEdit, 1500);
             resetTimer();
