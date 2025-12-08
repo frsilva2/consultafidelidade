@@ -337,7 +337,7 @@
                 warn.style.display = 'block';
             } else warn.style.display = 'none';
             
-            const temTelefone = currentCustomer.telefone && currentCustomer.telefone.trim() !== '';
+            const temTelefone = telefoneValido(currentCustomer.telefone);
             document.getElementById('phoneDisplay').textContent = temTelefone ? formatPhone(currentCustomer.telefone) : 'Não cadastrado';
             document.getElementById('phoneAlert').classList.toggle('hidden', temTelefone);
             document.getElementById('phoneView').classList.remove('hidden');
@@ -351,6 +351,20 @@
         function formatPhone(p) {
             const d = String(p).replace(/\D/g, '');
             return d.length === 11 ? '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7) : p;
+        }
+
+        function telefoneValido(tel) {
+            if (!tel) return false;
+            const digitos = String(tel).replace(/\D/g, '');
+            // Remove zeros do início e fim para verificar se sobra algo válido
+            const semZeros = digitos.replace(/^0+|0+$/g, '');
+            // Verifica se é só zeros ou vazio
+            if (!semZeros || /^0+$/.test(digitos)) return false;
+            // CNPJ tem 14 dígitos, descarta
+            if (digitos.length === 14) return false;
+            // Telefone válido: 10 ou 11 dígitos (com DDD)
+            if (digitos.length < 10 || digitos.length > 11) return false;
+            return true;
         }
 
         function showPhoneEdit() {
