@@ -356,12 +356,10 @@
         function telefoneValido(tel) {
             if (!tel) return false;
             const digitos = String(tel).replace(/\D/g, '');
-            // Remove zeros do início e fim para verificar se sobra algo válido
-            const semZeros = digitos.replace(/^0+|0+$/g, '');
-            // Verifica se é só zeros ou vazio
-            if (!semZeros || /^0+$/.test(digitos)) return false;
-            // CNPJ tem 14 dígitos, descarta
+            // CNPJ tem 14 dígitos, descarta (verificar antes de remover zeros)
             if (digitos.length === 14) return false;
+            // Verifica se é só zeros
+            if (/^0+$/.test(digitos)) return false;
             // Telefone válido: 10 ou 11 dígitos (com DDD)
             if (digitos.length < 10 || digitos.length > 11) return false;
             return true;
