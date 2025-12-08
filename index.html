@@ -81,7 +81,22 @@
         }
         .expiry-label { color: var(--azul); font-size: 1.1rem; }
         .expiry-value { color: var(--rosa); font-size: 1.6rem; font-weight: 800; }
-        .expiry-warning { color: #c00; font-weight: 700; margin-top: 8px; }
+        .expiry-warning { color: #c00; font-weight: 700; margin-top: 8px; font-size: 1.1rem; }
+
+        .motivational-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px; padding: 18px; margin-bottom: 20px;
+            color: #fff; font-size: 1.1rem; font-weight: 600;
+            text-align: center; line-height: 1.5;
+        }
+        .motivational-box.urgent {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
         
         .phone-box {
             background: #f5f5f5; border-radius: 12px;
@@ -206,6 +221,7 @@
                     <div class="expiry-value" id="expiryDate"></div>
                     <div class="expiry-warning" id="expiryWarning"></div>
                 </div>
+                <div class="motivational-box" id="motivationalBox"></div>
                 <div class="phone-box">
                     <div class="phone-alert hidden" id="phoneAlert">⚠️ Telefone não cadastrado! Por favor, atualize seus dados.</div>
                     <div class="phone-label">Seu telefone cadastrado:</div>
@@ -265,18 +281,41 @@
             const result = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = parseCSVLine(lines[i].trim());
-                if (cols.length >= 6) {
+                if (cols.length >= 7) {
+                    // Colunas: CPF(0), Nome(1), E-mail(2), Telefone(3), Saldo pts(4), Saldo R$(5), Vencimento data(6), Vencimento R$(7), Dias Exp(8), Loja cod(9), Loja nome(10)
+                    const dataVencimento = parseDataBR(cols[6]);
+                    const diasExp = calcularDiasExpiracao(dataVencimento);
+
                     result.push({
                         cpf: String(cols[0]).replace(/\D/g, '').padStart(11, '0'),
                         nome: cols[1],
                         telefone: cols[3],
-                        saldo: parseFloat(cols[4]) || 0,
-                        vencimento: cols[5],
-                        diasExp: parseInt(cols[6]) || 0
+                        saldo: parseFloat(String(cols[5]).replace(',', '.')) || 0,
+                        vencimento: cols[6],
+                        diasExp: diasExp
                     });
                 }
             }
             return result;
+        }
+
+        function parseDataBR(dataStr) {
+            if (!dataStr) return null;
+            // Formato DD/MM/YYYY ou DD/MM/YYYY HH:MM:SS
+            const partes = dataStr.split(' ')[0].split('/');
+            if (partes.length === 3) {
+                return new Date(partes[2], partes[1] - 1, partes[0]);
+            }
+            return null;
+        }
+
+        function calcularDiasExpiracao(dataVencimento) {
+            if (!dataVencimento) return 999;
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            dataVencimento.setHours(0, 0, 0, 0);
+            const diffMs = dataVencimento - hoje;
+            return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
         }
 
         function parseCSVLine(line) {
@@ -326,31 +365,92 @@
         function showResult() {
             document.getElementById('customerName').textContent = currentCustomer.nome;
             document.getElementById('balanceValue').textContent = 'R$ ' + currentCustomer.saldo.toFixed(2).replace('.', ',');
-            
+
             let data = currentCustomer.vencimento;
-            if (data.includes(' ')) data = data.split(' ')[0];
-            document.getElementById('expiryDate').textContent = data;
-            
+            if (data && data.includes(' ')) data = data.split(' ')[0];
+            document.getElementById('expiryDate').textContent = data || 'Não informado';
+
             const warn = document.getElementById('expiryWarning');
-            if (currentCustomer.diasExp <= 7) {
-                warn.textContent = '⚠️ Atenção: Vence em ' + currentCustomer.diasExp + ' dia(s)!';
+            const diasExp = currentCustomer.diasExp;
+
+            if (diasExp <= 0) {
+                warn.textContent = '❌ Atenção: Seu saldo EXPIROU! Procure o caixa para mais informações.';
                 warn.style.display = 'block';
-            } else warn.style.display = 'none';
-            
-            const temTelefone = currentCustomer.telefone && currentCustomer.telefone.trim() !== '';
+            } else if (diasExp <= 7) {
+                warn.textContent = '⚠️ Corre! Vence em apenas ' + diasExp + ' dia(s)! Não perca seu cashback!';
+                warn.style.display = 'block';
+            } else {
+                warn.style.display = 'none';
+            }
+
+            // Frase motivacional
+            const motBox = document.getElementById('motivationalBox');
+            const { frase, urgente } = getFraseMotivacional(currentCustomer.saldo, diasExp);
+            motBox.textContent = frase;
+            motBox.classList.toggle('urgent', urgente);
+
+            const temTelefone = telefoneValido(currentCustomer.telefone);
             document.getElementById('phoneDisplay').textContent = temTelefone ? formatPhone(currentCustomer.telefone) : 'Não cadastrado';
             document.getElementById('phoneAlert').classList.toggle('hidden', temTelefone);
             document.getElementById('phoneView').classList.remove('hidden');
             document.getElementById('phoneEdit').classList.add('hidden');
             document.getElementById('phoneSuccess').style.display = 'none';
-            
+
             showScreen('screenResult');
             startTimer();
+        }
+
+        function getFraseMotivacional(saldo, diasExp) {
+            // Frases urgentes (vence em breve)
+            if (diasExp <= 0) {
+                return { frase: '😢 Que pena! Seu cashback expirou. Mas não desanime, continue comprando para acumular mais! 💪', urgente: true };
+            }
+            if (diasExp <= 3) {
+                return { frase: '🚨 URGENTE! Só restam ' + diasExp + ' dia(s)! Use seu cashback HOJE e aproveite esse presentinho! 🎁', urgente: true };
+            }
+            if (diasExp <= 7) {
+                return { frase: '⏰ O tempo está passando! Faltam ' + diasExp + ' dias para usar seu cashback. Venha nos visitar! 🛍️', urgente: true };
+            }
+            if (diasExp <= 15) {
+                return { frase: '📅 Seu cashback vence em ' + diasExp + ' dias. Que tal escolher aquele tecido lindo que você viu? ✨', urgente: false };
+            }
+
+            // Frases baseadas no valor do saldo
+            if (saldo >= 100) {
+                return { frase: '🤩 Uau! Você tem um saldo incrível! Que tal transformar em lindos tecidos para seu próximo projeto? 🧵💖', urgente: false };
+            }
+            if (saldo >= 50) {
+                return { frase: '💰 Você tem um ótimo cashback acumulado! Use na sua próxima compra e economize! 🎉', urgente: false };
+            }
+            if (saldo >= 20) {
+                return { frase: '🌟 Seu cashback está esperando por você! Aproveite esse desconto especial nas suas compras! 💝', urgente: false };
+            }
+
+            // Frases genéricas
+            const frasesGenericas = [
+                '💕 Obrigada por fazer parte da família Empório Tecidos! Volte sempre! 🏠',
+                '✨ Cada compra rende mais cashback! Continue acumulando e economizando! 💰',
+                '🎀 Seu cashback é um presente nosso para você! Use e aproveite! 🎁',
+                '🧵 Transforme seu cashback em lindos tecidos! Estamos esperando sua visita! 💖'
+            ];
+            return { frase: frasesGenericas[Math.floor(Math.random() * frasesGenericas.length)], urgente: false };
         }
 
         function formatPhone(p) {
             const d = String(p).replace(/\D/g, '');
             return d.length === 11 ? '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7) : p;
+        }
+
+        function telefoneValido(tel) {
+            if (!tel) return false;
+            const digitos = String(tel).replace(/\D/g, '');
+            // CNPJ tem 14 dígitos, descarta (verificar antes de remover zeros)
+            if (digitos.length === 14) return false;
+            // Verifica se é só zeros
+            if (/^0+$/.test(digitos)) return false;
+            // Telefone válido: 10 ou 11 dígitos (com DDD)
+            if (digitos.length < 10 || digitos.length > 11) return false;
+            return true;
         }
 
         function showPhoneEdit() {
