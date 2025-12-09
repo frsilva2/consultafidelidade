@@ -144,7 +144,7 @@
         .error-icon { font-size: 4rem; margin-bottom: 15px; }
         .error-title { color: var(--rosa); font-size: 1.6rem; font-weight: 800; margin-bottom: 10px; }
         .error-msg { color: var(--azul); font-size: 1.3rem; margin-bottom: 25px; }
-        
+
         .spinner {
             width: 60px; height: 60px;
             border: 6px solid var(--rosa-claro); border-top-color: var(--rosa);
@@ -152,6 +152,38 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text { color: var(--azul); font-size: 1.3rem; }
+
+        /* Indicador de atualização */
+        .update-indicator {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; margin-bottom: 20px; padding: 10px 15px;
+            background: #f0f4ff; border-radius: 25px;
+            font-size: 0.9rem; color: var(--azul);
+        }
+        .update-indicator.loading { opacity: 0.6; }
+        .update-indicator .refresh-btn {
+            background: var(--azul); color: #fff; border: none;
+            padding: 5px 12px; border-radius: 15px; cursor: pointer;
+            font-size: 0.85rem; font-weight: 600;
+        }
+        .update-indicator .refresh-btn:hover { background: var(--rosa); }
+        .update-indicator.loading .refresh-btn { pointer-events: none; }
+        .update-icon { transition: transform 0.3s; }
+        .update-indicator.loading .update-icon { animation: spin 1s linear infinite; }
+
+        /* Box de saldo expirado */
+        .expired-box {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            border-radius: 12px; padding: 15px; margin-bottom: 15px;
+            border: 2px dashed #adb5bd;
+        }
+        .expired-box.hidden { display: none; }
+        .expired-label { color: rgba(255,255,255,0.85); font-size: 0.95rem; }
+        .expired-value { color: #fff; font-size: 1.8rem; font-weight: 800; }
+        .expired-hint {
+            color: rgba(255,255,255,0.7); font-size: 0.8rem;
+            margin-top: 8px; font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -180,6 +212,11 @@
         <div class="subtitle">Confira seu saldo agora mesmo!</div>
 
         <div id="screenInput" class="screen active">
+            <div class="update-indicator" id="updateIndicator">
+                <span class="update-icon">🔄</span>
+                <span>Atualizado às <strong id="lastUpdateTime">--:--</strong></span>
+                <button class="refresh-btn" onclick="forceRefresh()">Atualizar</button>
+            </div>
             <div class="card">
                 <label class="input-label">Digite seu CPF:</label>
                 <input type="text" id="cpfInput" class="cpf-input" placeholder="000.000.000-00" readonly>
@@ -221,6 +258,11 @@
                     <div class="expiry-value" id="expiryDate"></div>
                     <div class="expiry-warning" id="expiryWarning"></div>
                 </div>
+                <div class="expired-box hidden" id="expiredBox">
+                    <div class="expired-label">💤 Saldo não utilizado (expirado):</div>
+                    <div class="expired-value" id="expiredValue">R$ 0,00</div>
+                    <div class="expired-hint">Consulte o gerente para possível reativação</div>
+                </div>
                 <div class="motivational-box" id="motivationalBox"></div>
                 <div class="phone-box">
                     <div class="phone-alert hidden" id="phoneAlert">⚠️ Telefone não cadastrado! Por favor, atualize seus dados.</div>
@@ -256,23 +298,119 @@
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-dZZ8NwD0OBeTElWMV_6Bgjc4FOQIEr89OopYJyfckhGWmcRVIbcU4Xo5TPODOA/pub?output=csv';
-        
+        const CACHE_KEY = 'emporio_customers_cache';
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos em ms
+
         let customers = [];
         let currentCustomer = null;
         let cpfDigits = '';
         let timerInterval = null;
         let timeLeft = 90;
+        let lastUpdate = null;
+        let isLoading = false;
 
-        window.onload = () => loadData();
+        window.onload = () => initApp();
 
-        async function loadData() {
+        async function initApp() {
+            // Tenta carregar do cache primeiro (instantâneo)
+            const cached = loadFromCache();
+            if (cached) {
+                customers = cached.data;
+                lastUpdate = new Date(cached.timestamp);
+                updateLastUpdateDisplay();
+                console.log('📦 Cache carregado:', customers.length, 'clientes');
+
+                // Atualiza em background se cache estiver antigo
+                if (isCacheExpired(cached.timestamp)) {
+                    console.log('🔄 Cache expirado, atualizando em background...');
+                    loadDataFromServer(true);
+                }
+            } else {
+                // Sem cache, carrega do servidor
+                await loadDataFromServer(false);
+            }
+        }
+
+        function loadFromCache() {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    return JSON.parse(cached);
+                }
+            } catch (e) {
+                console.error('Erro ao ler cache:', e);
+            }
+            return null;
+        }
+
+        function saveToCache(data) {
+            try {
+                const cacheData = {
+                    data: data,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+            } catch (e) {
+                console.error('Erro ao salvar cache:', e);
+            }
+        }
+
+        function isCacheExpired(timestamp) {
+            return (Date.now() - timestamp) > CACHE_DURATION;
+        }
+
+        async function loadDataFromServer(isBackground = false) {
+            if (isLoading) return;
+            isLoading = true;
+
+            if (!isBackground) {
+                showLoadingIndicator();
+            }
+
             try {
                 const response = await fetch(SHEET_URL);
                 const csv = await response.text();
                 customers = parseCSV(csv);
-                console.log('Carregados:', customers.length, 'clientes');
+                lastUpdate = new Date();
+                saveToCache(customers);
+                updateLastUpdateDisplay();
+                console.log('✅ Servidor carregado:', customers.length, 'clientes');
             } catch (error) {
-                console.error('Erro:', error);
+                console.error('❌ Erro ao carregar:', error);
+                if (!isBackground && customers.length === 0) {
+                    alert('Erro ao carregar dados. Verifique sua conexão.');
+                }
+            } finally {
+                isLoading = false;
+                hideLoadingIndicator();
+            }
+        }
+
+        function showLoadingIndicator() {
+            const indicator = document.getElementById('updateIndicator');
+            if (indicator) indicator.classList.add('loading');
+        }
+
+        function hideLoadingIndicator() {
+            const indicator = document.getElementById('updateIndicator');
+            if (indicator) indicator.classList.remove('loading');
+        }
+
+        function updateLastUpdateDisplay() {
+            const el = document.getElementById('lastUpdateTime');
+            if (el && lastUpdate) {
+                el.textContent = lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+
+        async function forceRefresh() {
+            await loadDataFromServer(false);
+        }
+
+        // Função legada mantida para compatibilidade
+        async function loadData() {
+            if (customers.length === 0) {
+                await loadDataFromServer(false);
             }
         }
 
@@ -286,11 +424,15 @@
                     const dataVencimento = parseDataBR(cols[6]);
                     const diasExp = calcularDiasExpiracao(dataVencimento);
 
+                    // Saldo expirado (coluna 7 - Vencimento R$)
+                    const saldoExpirado = parseFloat(String(cols[7] || '0').replace(',', '.')) || 0;
+
                     result.push({
                         cpf: String(cols[0]).replace(/\D/g, '').padStart(11, '0'),
                         nome: cols[1],
                         telefone: cols[3],
                         saldo: parseFloat(String(cols[5]).replace(',', '.')) || 0,
+                        saldoExpirado: saldoExpirado,
                         vencimento: cols[6],
                         diasExp: diasExp
                     });
@@ -351,15 +493,20 @@
 
         async function consultar() {
             showScreen('screenLoading');
-            await loadData();
-            
+
+            // Só carrega se não tiver dados (cache vazio)
+            if (customers.length === 0) {
+                await loadDataFromServer(false);
+            }
+
             const cpfLimpo = cpfDigits.replace(/^0+/, '');
             currentCustomer = customers.find(c => c.cpf === cpfDigits || c.cpf.replace(/^0+/, '') === cpfLimpo);
 
+            // Tempo reduzido para 300ms (era 800ms)
             setTimeout(() => {
                 if (currentCustomer) showResult();
                 else showScreen('screenError');
-            }, 800);
+            }, 300);
         }
 
         function showResult() {
@@ -381,6 +528,16 @@
                 warn.style.display = 'block';
             } else {
                 warn.style.display = 'none';
+            }
+
+            // Exibir saldo expirado (se houver)
+            const expiredBox = document.getElementById('expiredBox');
+            const expiredValue = document.getElementById('expiredValue');
+            if (currentCustomer.saldoExpirado > 0) {
+                expiredValue.textContent = 'R$ ' + currentCustomer.saldoExpirado.toFixed(2).replace('.', ',');
+                expiredBox.classList.remove('hidden');
+            } else {
+                expiredBox.classList.add('hidden');
             }
 
             // Frase motivacional
