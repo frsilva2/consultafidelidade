@@ -314,19 +314,23 @@
         async function initApp() {
             // Tenta carregar do cache primeiro (instantâneo)
             const cached = loadFromCache();
-            if (cached) {
+            if (cached && !isCacheFromAnotherDay(cached.timestamp)) {
                 customers = cached.data;
                 lastUpdate = new Date(cached.timestamp);
                 updateLastUpdateDisplay();
                 console.log('📦 Cache carregado:', customers.length, 'clientes');
 
-                // Atualiza em background se cache estiver antigo
+                // Atualiza em background se cache estiver antigo (mais de 5 min)
                 if (isCacheExpired(cached.timestamp)) {
                     console.log('🔄 Cache expirado, atualizando em background...');
                     loadDataFromServer(true);
                 }
             } else {
-                // Sem cache, carrega do servidor
+                // Sem cache ou cache de outro dia - carrega do servidor
+                if (cached) {
+                    console.log('📅 Novo dia detectado, limpando cache antigo...');
+                    localStorage.removeItem(CACHE_KEY);
+                }
                 await loadDataFromServer(false);
             }
         }
@@ -347,7 +351,8 @@
             try {
                 const cacheData = {
                     data: data,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    date: new Date().toDateString() // Guarda a data (ex: "Mon Dec 09 2024")
                 };
                 localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
             } catch (e) {
@@ -357,6 +362,13 @@
 
         function isCacheExpired(timestamp) {
             return (Date.now() - timestamp) > CACHE_DURATION;
+        }
+
+        // Verifica se o cache é de um dia diferente de hoje
+        function isCacheFromAnotherDay(timestamp) {
+            const cacheDate = new Date(timestamp).toDateString();
+            const today = new Date().toDateString();
+            return cacheDate !== today;
         }
 
         async function loadDataFromServer(isBackground = false) {
