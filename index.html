@@ -135,16 +135,7 @@
             background: var(--azul); color: #fff; text-transform: uppercase;
         }
         
-        .timer-bar {
-            position: fixed; bottom: 0; left: 0; height: 6px;
-            background: var(--rosa); transition: width 1s linear;
-        }
-        .timer-text {
-            position: fixed; bottom: 15px; right: 15px;
-            background: var(--azul); color: #fff;
-            padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;
-        }
-        
+                
         .error-icon { font-size: 4rem; margin-bottom: 15px; }
         .error-title { color: var(--rosa); font-size: 1.6rem; font-weight: 800; margin-bottom: 10px; }
         .error-msg { color: var(--azul); font-size: 1.3rem; margin-bottom: 25px; }
@@ -271,11 +262,6 @@
                 padding: 4px 10px; font-size: 0.75rem;
             }
 
-            .timer-text {
-                bottom: 12px; right: 10px;
-                padding: 6px 12px; font-size: 0.8rem;
-            }
-
             .error-icon { font-size: 3rem; }
             .error-title { font-size: 1.3rem; }
             .error-msg { font-size: 1.1rem; margin-bottom: 20px; }
@@ -337,8 +323,8 @@
                 <button class="refresh-btn" onclick="forceRefresh()">Atualizar</button>
             </div>
             <div class="card">
-                <label class="input-label">Digite seu CPF:</label>
-                <input type="text" id="cpfInput" class="cpf-input" placeholder="000.000.000-00" readonly>
+                <label class="input-label">Digite seu CPF ou CNPJ:</label>
+                <input type="text" id="cpfInput" class="cpf-input" placeholder="CPF ou CNPJ" inputmode="numeric">
                 <div class="numpad">
                     <button class="num-btn" onclick="addDigit('1')">1</button>
                     <button class="num-btn" onclick="addDigit('2')">2</button>
@@ -354,6 +340,13 @@
                     <button class="num-btn back" onclick="backspace()">⌫</button>
                 </div>
                 <button id="btnConsultar" class="btn-main" onclick="consultar()" disabled>CONSULTAR SALDO</button>
+                <script>
+                    // Permite colar e digitar diretamente no campo
+                    document.getElementById('cpfInput').addEventListener('input', handlePaste);
+                    document.getElementById('cpfInput').addEventListener('paste', function(e) {
+                        setTimeout(handlePaste, 10);
+                    });
+                </script>
             </div>
         </div>
 
@@ -402,8 +395,6 @@
                 </div>
                 <button class="btn-end" onclick="encerrar()">ENCERRAR CONSULTA</button>
             </div>
-            <div class="timer-bar" id="timerBar"></div>
-            <div class="timer-text" id="timerText"></div>
         </div>
 
         <div id="screenError" class="screen">
@@ -419,7 +410,7 @@
     <script>
         // ============ CONFIGURAÇÃO DA API ============
         // Substitua pela URL do seu Google Apps Script após implantação
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyrFOLbfkOGVk67M0XuV35rQpxPwemZ2wnGU80en8hXGUyUoFQ3hb2TuwQL7u-5kZGuyQ/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxVHmCoWOkoVObvYqaMt6lbFF9FtvzsthvFbuAAH62qb0vb1jTuPikQbV2nLTCXlI7Y/exec';
         const API_TOKEN = 'fdadfasfasgasgasgasgasgfsa'; // Mesmo token do Apps Script
 
         const CACHE_KEY = 'emporio_customers_cache';
@@ -430,8 +421,6 @@
         let expiredPoints = {}; // Mapa CPF -> array de pontos expirados
         let currentCustomer = null;
         let cpfDigits = '';
-        let timerInterval = null;
-        let timeLeft = 90;
         let lastUpdate = null;
         let isLoading = false;
 
@@ -726,17 +715,44 @@
             return expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
         }
 
-        function addDigit(d) { if (cpfDigits.length < 11) { cpfDigits += d; updateDisplay(); } }
+        function addDigit(d) { if (cpfDigits.length < 14) { cpfDigits += d; updateDisplay(); } }
         function backspace() { cpfDigits = cpfDigits.slice(0, -1); updateDisplay(); }
         function clearCpf() { cpfDigits = ''; updateDisplay(); }
 
+        // Função para tratar dados colados ou digitados diretamente
+        function handlePaste() {
+            const input = document.getElementById('cpfInput');
+            const rawValue = input.value.replace(/\D/g, '');
+            if (rawValue.length > 0) {
+                cpfDigits = rawValue.slice(0, 14); // Máximo 14 dígitos (CNPJ)
+                updateDisplay();
+            }
+        }
+
+        function formatCpfCnpj(digits) {
+            if (digits.length <= 11) {
+                // Formato CPF: 000.000.000-00
+                let f = digits;
+                if (f.length > 3) f = f.slice(0,3) + '.' + f.slice(3);
+                if (f.length > 7) f = f.slice(0,7) + '.' + f.slice(7);
+                if (f.length > 11) f = f.slice(0,11) + '-' + f.slice(11);
+                return f;
+            } else {
+                // Formato CNPJ: 00.000.000/0000-00
+                let f = digits;
+                if (f.length > 2) f = f.slice(0,2) + '.' + f.slice(2);
+                if (f.length > 6) f = f.slice(0,6) + '.' + f.slice(6);
+                if (f.length > 10) f = f.slice(0,10) + '/' + f.slice(10);
+                if (f.length > 15) f = f.slice(0,15) + '-' + f.slice(15);
+                return f;
+            }
+        }
+
         function updateDisplay() {
-            let f = cpfDigits;
-            if (f.length > 3) f = f.slice(0,3) + '.' + f.slice(3);
-            if (f.length > 7) f = f.slice(0,7) + '.' + f.slice(7);
-            if (f.length > 11) f = f.slice(0,11) + '-' + f.slice(11);
-            document.getElementById('cpfInput').value = f;
-            document.getElementById('btnConsultar').disabled = cpfDigits.length !== 11;
+            document.getElementById('cpfInput').value = formatCpfCnpj(cpfDigits);
+            // Habilita consulta para CPF (11 dígitos) ou CNPJ (14 dígitos)
+            const isValid = cpfDigits.length === 11 || cpfDigits.length === 14;
+            document.getElementById('btnConsultar').disabled = !isValid;
         }
 
         function showScreen(id) {
@@ -752,8 +768,13 @@
                 await loadDataFromServer(false);
             }
 
-            const cpfLimpo = cpfDigits.replace(/^0+/, '');
-            currentCustomer = customers.find(c => c.cpf === cpfDigits || c.cpf.replace(/^0+/, '') === cpfLimpo);
+            // Busca por CPF ou CNPJ (remove zeros à esquerda para comparação)
+            const docLimpo = cpfDigits.replace(/^0+/, '');
+            currentCustomer = customers.find(c => {
+                const cpfCliente = String(c.cpf).replace(/\D/g, '');
+                const cpfClienteLimpo = cpfCliente.replace(/^0+/, '');
+                return cpfCliente === cpfDigits || cpfClienteLimpo === docLimpo;
+            });
 
             // Tempo reduzido para 300ms (era 800ms)
             setTimeout(() => {
@@ -831,7 +852,7 @@
             document.getElementById('phoneSuccess').style.display = 'none';
 
             showScreen('screenResult');
-            startTimer();
+            // Timer removido - apenas botão manual para encerrar
         }
 
         function getFraseMotivacional(saldo, diasExp) {
@@ -890,7 +911,6 @@
         function showPhoneEdit() {
             document.getElementById('phoneView').classList.add('hidden');
             document.getElementById('phoneEdit').classList.remove('hidden');
-            resetTimer();
         }
 
         function cancelPhoneEdit() {
@@ -910,24 +930,9 @@
             document.getElementById('phoneAlert').classList.add('hidden');
             document.getElementById('phoneSuccess').style.display = 'block';
             setTimeout(cancelPhoneEdit, 1500);
-            resetTimer();
-        }
-
-        function startTimer() {
-            timeLeft = 90;
-            updateTimer();
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => { timeLeft--; updateTimer(); if (timeLeft <= 0) encerrar(); }, 1000);
-        }
-
-        function resetTimer() { timeLeft = 90; updateTimer(); }
-        function updateTimer() {
-            document.getElementById('timerBar').style.width = (timeLeft / 90 * 100) + '%';
-            document.getElementById('timerText').textContent = 'Encerra em ' + timeLeft + 's';
         }
 
         function encerrar() {
-            if (timerInterval) clearInterval(timerInterval);
             cpfDigits = '';
             currentCustomer = null;
             updateDisplay();

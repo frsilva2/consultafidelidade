@@ -1,24 +1,24 @@
 /**
  * GOOGLE APPS SCRIPT - API para Consulta de Fidelidade
+ * Empório Tecidos
  *
- * INSTRUÇÕES DE CONFIGURAÇÃO:
+ * INSTRUÇÕES DE IMPLANTAÇÃO:
  * 1. Acesse https://script.google.com/
  * 2. Clique em "Novo Projeto"
  * 3. Cole todo este código
- * 4. Substitua SPREADSHEET_ID pelo ID da sua planilha
- * 5. Substitua API_TOKEN por um token secreto de sua escolha
- * 6. Clique em "Implantar" > "Nova implantação"
- * 7. Tipo: "App da Web"
- * 8. Executar como: "Eu"
- * 9. Quem pode acessar: "Qualquer pessoa"
- * 10. Copie a URL gerada e use no index.html
+ * 4. Salve (Ctrl+S)
+ * 5. Clique em "Implantar" > "Nova implantação"
+ * 6. Tipo: "App da Web"
+ * 7. Executar como: "Eu"
+ * 8. Quem pode acessar: "Qualquer pessoa"
+ * 9. Copie a URL gerada e use no index.html
  */
 
 // ============ CONFIGURAÇÕES ============
-const SPREADSHEET_ID = 'SEU_SPREADSHEET_ID_AQUI'; // ID da planilha (da URL)
-const API_TOKEN = 'emporio2024secreto'; // Token de segurança (mude para algo único!)
-const MAIN_SHEET_NAME = 'Página1'; // Nome da aba principal (ou deixe vazio para primeira aba)
-const EXPIRED_SHEET_NAME = 'Pagina1'; // Nome da aba de expirados
+const SPREADSHEET_ID = '1GCqzpXk_NBxQ2bBYSZLLqtCEIsNsobzQ0dcyUCGk2DM'; // ID da planilha Google Sheets
+const API_TOKEN = 'fdadfasfasgasgasgasgasgfsa'; // Token de segurança
+const MAIN_SHEET_NAME = 'vencer'; // Aba com clientes e saldo a vencer
+const EXPIRED_SHEET_NAME = 'vencido'; // Aba com saldos expirados
 
 // ============ FUNÇÕES PRINCIPAIS ============
 
