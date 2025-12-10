@@ -50,10 +50,10 @@ function doGet(e) {
     }
 
     if (action === 'expired') {
-      const data = getExpiredData();
+      const expiredData = getExpiredData();
       return output.setContent(JSON.stringify({
         success: true,
-        data: data,
+        data: expiredData.items,
         timestamp: new Date().toISOString()
       }));
     }
