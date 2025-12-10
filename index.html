@@ -2,7 +2,11 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#EE2B68">
     <title>Consulta de Saldo - Empório Tecidos</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -184,6 +188,107 @@
             color: rgba(255,255,255,0.7); font-size: 0.8rem;
             margin-top: 8px; font-style: italic;
         }
+
+        /* ========== RESPONSIVO SMARTPHONE ========== */
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+                padding-top: 15px;
+            }
+            .logo { width: 200px; margin-bottom: 10px; }
+            .welcome { font-size: 1.3rem; }
+            .subtitle { font-size: 1rem; margin-bottom: 15px; }
+
+            .card { padding: 20px 15px; border-radius: 16px; }
+            .input-label { font-size: 1.1rem; margin-bottom: 10px; }
+            .cpf-input {
+                padding: 14px 10px; font-size: 1.5rem;
+                letter-spacing: 1px; border-radius: 10px;
+            }
+
+            .numpad {
+                gap: 8px; max-width: 100%; margin-top: 15px;
+            }
+            .num-btn {
+                padding: 18px 10px; font-size: 1.5rem;
+                border-radius: 10px;
+                min-height: 60px;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .btn-main {
+                padding: 16px; font-size: 1.1rem;
+                margin-top: 15px; border-radius: 10px;
+            }
+
+            .greeting { font-size: 1.2rem; }
+            .customer-name { font-size: 1.5rem; margin-bottom: 15px; }
+
+            .balance-box { padding: 18px; border-radius: 12px; margin-bottom: 15px; }
+            .balance-label { font-size: 1rem; }
+            .balance-value { font-size: 2.5rem; }
+
+            .expiry-box { padding: 14px; margin-bottom: 15px; }
+            .expiry-label { font-size: 0.95rem; }
+            .expiry-value { font-size: 1.3rem; }
+            .expiry-warning { font-size: 0.95rem; }
+
+            .expired-box { padding: 12px; margin-bottom: 12px; }
+            .expired-label { font-size: 0.85rem; }
+            .expired-value { font-size: 1.5rem; }
+            .expired-hint { font-size: 0.75rem; }
+
+            .motivational-box { padding: 14px; font-size: 0.95rem; margin-bottom: 15px; }
+
+            .phone-box { padding: 15px; margin-bottom: 15px; }
+            .phone-label { font-size: 0.9rem; }
+            .phone-display { font-size: 1.1rem; }
+            .phone-input { padding: 10px; font-size: 1.1rem; }
+            .btn-phone { padding: 10px 18px; font-size: 0.9rem; }
+
+            .btn-end { padding: 14px 30px; font-size: 1.1rem; }
+
+            .update-indicator {
+                padding: 8px 12px; font-size: 0.8rem;
+                margin-bottom: 12px; gap: 6px;
+            }
+            .update-indicator .refresh-btn {
+                padding: 4px 10px; font-size: 0.75rem;
+            }
+
+            .timer-text {
+                bottom: 12px; right: 10px;
+                padding: 6px 12px; font-size: 0.8rem;
+            }
+
+            .error-icon { font-size: 3rem; }
+            .error-title { font-size: 1.3rem; }
+            .error-msg { font-size: 1.1rem; margin-bottom: 20px; }
+        }
+
+        /* Telas muito pequenas (iPhone SE, etc) */
+        @media screen and (max-width: 360px) {
+            .logo { width: 160px; }
+            .welcome { font-size: 1.1rem; }
+            .subtitle { font-size: 0.9rem; }
+            .cpf-input { font-size: 1.3rem; padding: 12px 8px; }
+            .num-btn { padding: 15px 8px; font-size: 1.3rem; min-height: 55px; }
+            .balance-value { font-size: 2rem; }
+            .customer-name { font-size: 1.3rem; }
+        }
+
+        /* Melhorias de toque */
+        @media (hover: none) and (pointer: coarse) {
+            .num-btn:active {
+                transform: scale(0.92);
+                opacity: 0.9;
+            }
+            .btn-main:active, .btn-end:active, .btn-phone:active {
+                transform: scale(0.98);
+                opacity: 0.9;
+            }
+        }
     </style>
 </head>
 <body>
@@ -272,7 +377,7 @@
                         <button class="btn-phone btn-edit" onclick="showPhoneEdit()">Atualizar Telefone</button>
                     </div>
                     <div id="phoneEdit" class="hidden">
-                        <input type="tel" id="phoneInput" class="phone-input" placeholder="(31) 99999-9999" maxlength="15">
+                        <input type="tel" id="phoneInput" class="phone-input" placeholder="(31) 99999-9999" maxlength="15" inputmode="numeric" autocomplete="tel">
                         <div>
                             <button class="btn-phone btn-save" onclick="savePhone()">Salvar</button>
                             <button class="btn-phone btn-cancel" onclick="cancelPhoneEdit()">Cancelar</button>
