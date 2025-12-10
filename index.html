@@ -531,7 +531,6 @@
                         ...c,
                         diasExp: calcularDiasExpiracao(parseDataBR(c.vencimento))
                     }));
-                    saveToCache(CACHE_KEY, customers);
                     console.log('✅ Clientes carregados:', customers.length);
                 }
 
@@ -541,6 +540,26 @@
                     saveToCache(EXPIRED_CACHE_KEY, expiredPoints);
                     console.log('✅ Pontos expirados carregados');
                 }
+
+                // Adiciona clientes da aba de vencidos que não estão na lista principal
+                if (result.expiredCustomers && result.expiredCustomers.length > 0) {
+                    const existingCpfs = new Set(customers.map(c => String(c.cpf).replace(/\D/g, '')));
+                    const newCustomers = result.expiredCustomers
+                        .filter(c => !existingCpfs.has(String(c.cpf).replace(/\D/g, '')))
+                        .map(c => ({
+                            ...c,
+                            saldo: 0,
+                            saldoExpirado: 0,
+                            vencimento: '',
+                            diasExp: -999 // Expirado
+                        }));
+                    if (newCustomers.length > 0) {
+                        customers = [...customers, ...newCustomers];
+                        console.log('✅ Clientes de vencidos adicionados:', newCustomers.length);
+                    }
+                }
+
+                saveToCache(CACHE_KEY, customers);
 
                 lastUpdate = new Date(result.timestamp || Date.now());
                 updateLastUpdateDisplay();

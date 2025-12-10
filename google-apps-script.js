@@ -60,11 +60,12 @@ function doGet(e) {
 
     if (action === 'all') {
       const customers = getCustomersData();
-      const expired = getExpiredData();
+      const expiredData = getExpiredData();
       return output.setContent(JSON.stringify({
         success: true,
         customers: customers,
-        expired: expired,
+        expired: expiredData.items,
+        expiredCustomers: expiredData.customers,
         timestamp: new Date().toISOString()
       }));
     }
@@ -131,18 +132,20 @@ function getExpiredData() {
   const sheet = ss.getSheetByName(EXPIRED_SHEET_NAME);
 
   if (!sheet) {
-    return {}; // Retorna vazio se aba não existe
+    return { items: {}, customers: [] }; // Retorna vazio se aba não existe
   }
 
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
-  const result = {};
+  const items = {};
+  const customersMap = {}; // Para não duplicar clientes
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
   // Mapeia colunas
   const colMap = {
     cpf: findColumn(headers, ['cpf', 'documento']),
+    nome: findColumn(headers, ['nome', 'cliente']),
     data: findColumn(headers, ['data', 'vencimento', 'expira']),
     valor: findColumn(headers, ['valor', 'saldo', 'r$', 'pontos'])
   };
@@ -154,15 +157,21 @@ function getExpiredData() {
 
     if (cpf.length >= 10) {
       const cpfNorm = cpf.padStart(11, '0');
+      const nome = row[colMap.nome] || '';
       const dataExp = parseDate(row[colMap.data]);
       const valor = parseNumber(row[colMap.valor]);
 
-      // Só inclui se expirado (data < hoje) e valor > 0
+      // Guarda cliente para busca (mesmo que não tenha expirado ainda)
+      if (nome && !customersMap[cpfNorm]) {
+        customersMap[cpfNorm] = { cpf: cpfNorm, nome: nome };
+      }
+
+      // Só inclui nos itens expirados se data < hoje e valor > 0
       if (dataExp && dataExp < hoje && valor > 0) {
-        if (!result[cpfNorm]) {
-          result[cpfNorm] = [];
+        if (!items[cpfNorm]) {
+          items[cpfNorm] = [];
         }
-        result[cpfNorm].push({
+        items[cpfNorm].push({
           data: formatDate(row[colMap.data]),
           valor: valor
         });
@@ -170,7 +179,10 @@ function getExpiredData() {
     }
   }
 
-  return result;
+  return {
+    items: items,
+    customers: Object.values(customersMap)
+  };
 }
 
 // ============ FUNÇÕES AUXILIARES ============
