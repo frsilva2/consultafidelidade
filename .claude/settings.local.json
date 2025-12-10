@@ -12,7 +12,8 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nCorrige função de colar CPF/CNPJ no campo de pesquisa\n\n- Captura dados diretamente do clipboard no evento paste\n- Previne comportamento padrão para processar corretamente\n- Remove setTimeout desnecessário do event listener\n- Formatação e validação funcionam imediatamente ao colar\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git fetch:*)",
       "Bash(git commit:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
