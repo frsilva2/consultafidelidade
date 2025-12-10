@@ -95,33 +95,23 @@ function getCustomersData() {
   const headers = data[0];
   const result = [];
 
-  // Mapeia colunas - Aba "vencer"
-  // CPF, Nome, E-mail, Telefone, Saldo total (pts), Saldo total (R$), Primeiro vencimento (data), Primeiro vencimento (R$), Dias Exp., Loja (código), Loja (nome)
-  const colMap = {
-    cpf: findColumn(headers, ['cpf', 'documento']),
-    nome: findColumn(headers, ['nome', 'cliente']),
-    email: findColumn(headers, ['email', 'e-mail']),
-    telefone: findColumn(headers, ['telefone', 'tel', 'celular']),
-    saldoPts: findColumn(headers, ['saldo total (pts)', 'saldo pts', 'pontos']),
-    saldoRS: findColumn(headers, ['saldo total (r$)', 'saldo r$', 'saldo', 'valor']),
-    vencimento: findColumn(headers, ['primeiro vencimento (data)', 'vencimento', 'validade']),
-    primeiroVencimentoRS: findColumn(headers, ['primeiro vencimento (r$)'])
-  };
+  // Colunas fixas - Aba "vencer"
+  // A=CPF(0), B=Nome(1), C=E-mail(2), D=Telefone(3), E=Saldo pts(4), F=Saldo R$(5), G=Vencimento data(6), H=Vencimento R$(7), I=Dias Exp(8), J=Loja cod(9), K=Loja nome(10)
 
   // Processa linhas
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const cpf = String(row[colMap.cpf] || '').replace(/\D/g, '');
+    const cpf = String(row[0] || '').replace(/\D/g, ''); // Coluna A
 
     if (cpf.length >= 8) {
       // Normaliza: CPF com 11 dígitos, CNPJ com 14
       const cpfNorm = cpf.length <= 11 ? cpf.padStart(11, '0') : cpf.padStart(14, '0');
       result.push({
         cpf: cpfNorm,
-        nome: row[colMap.nome] || '',
-        telefone: row[colMap.telefone] || '',
-        saldo: parseNumber(row[colMap.saldoRS]),
-        vencimento: formatDate(row[colMap.vencimento])
+        nome: row[1] || '',           // Coluna B
+        telefone: row[3] || '',       // Coluna D
+        saldo: parseNumber(row[5]),   // Coluna F - Saldo R$
+        vencimento: formatDate(row[6]) // Coluna G - Vencimento data
       });
     }
   }
@@ -144,30 +134,23 @@ function getExpiredData() {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  // Mapeia colunas - Aba "vencido"
-  // CPF, Nome do cliente, Email, Telefone, Saldo Atual (pontos), Saldo Atual (R$), Ticket, Data de expiração, Expirado (pontos), Expirado (R$)
-  const colMap = {
-    cpf: findColumn(headers, ['cpf', 'documento']),
-    nome: findColumn(headers, ['nome do cliente', 'nome', 'cliente']),
-    ticket: findColumn(headers, ['ticket']),
-    data: findColumn(headers, ['data de expiração', 'data', 'vencimento', 'expira']),
-    valor: findColumn(headers, ['expirado (r$)', 'expirado r$', 'valor expirado'])
-  };
+  // Colunas fixas - Aba "vencido"
+  // A=CPF(0), B=Nome(1), C=Email(2), D=Telefone(3), E=Saldo pts(4), F=Saldo R$(5), G=Ticket(6), H=Data exp(7), I=Expirado pts(8), J=Expirado R$(9)
 
   const ticketsProcessados = {}; // Para evitar duplicação por ticket
 
   // Processa linhas
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const cpf = String(row[colMap.cpf] || '').replace(/\D/g, '');
+    const cpf = String(row[0] || '').replace(/\D/g, ''); // Coluna A
 
     if (cpf.length >= 8) {
       // Normaliza: CPF com 11 dígitos, CNPJ com 14
       const cpfNorm = cpf.length <= 11 ? cpf.padStart(11, '0') : cpf.padStart(14, '0');
-      const nome = row[colMap.nome] || '';
-      const ticket = String(row[colMap.ticket] || '');
-      const dataExp = parseDate(row[colMap.data]);
-      const valor = parseNumber(row[colMap.valor]);
+      const nome = row[1] || '';              // Coluna B
+      const ticket = String(row[6] || '');    // Coluna G
+      const dataExp = parseDate(row[7]);      // Coluna H
+      const valor = parseNumber(row[9]);      // Coluna J - Expirado R$
 
       // Guarda cliente para busca (mesmo que não tenha expirado ainda)
       if (nome && !customersMap[cpfNorm]) {
@@ -184,7 +167,7 @@ function getExpiredData() {
             items[cpfNorm] = [];
           }
           items[cpfNorm].push({
-            data: formatDate(row[colMap.data]),
+            data: formatDate(row[7]),  // Coluna H
             valor: valor
           });
         }
