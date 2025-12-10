@@ -188,6 +188,18 @@
             color: rgba(255,255,255,0.7); font-size: 0.8rem;
             margin-top: 8px; font-style: italic;
         }
+        .expired-details {
+            margin-top: 10px; padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+        .expired-details.hidden { display: none; }
+        .expired-item {
+            color: rgba(255,255,255,0.9); font-size: 0.85rem;
+            padding: 4px 0; text-align: left;
+        }
+        .expired-item strong {
+            color: #fff;
+        }
 
         /* ========== RESPONSIVO SMARTPHONE ========== */
         @media screen and (max-width: 480px) {
@@ -238,6 +250,8 @@
             .expired-label { font-size: 0.85rem; }
             .expired-value { font-size: 1.5rem; }
             .expired-hint { font-size: 0.75rem; }
+            .expired-details { margin-top: 8px; padding-top: 8px; }
+            .expired-item { font-size: 0.8rem; padding: 3px 0; }
 
             .motivational-box { padding: 14px; font-size: 0.95rem; margin-bottom: 15px; }
 
@@ -366,6 +380,7 @@
                 <div class="expired-box hidden" id="expiredBox">
                     <div class="expired-label">💤 Saldo não utilizado (expirado):</div>
                     <div class="expired-value" id="expiredValue">R$ 0,00</div>
+                    <div class="expired-details hidden" id="expiredDetails"></div>
                     <div class="expired-hint">Consulte o gerente para possível reativação</div>
                 </div>
                 <div class="motivational-box" id="motivationalBox"></div>
@@ -403,10 +418,13 @@
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-dZZ8NwD0OBeTElWMV_6Bgjc4FOQIEr89OopYJyfckhGWmcRVIbcU4Xo5TPODOA/pub?output=csv';
+        const EXPIRED_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-dZZ8NwD0OBeTElWMV_6Bgjc4FOQIEr89OopYJyfckhGWmcRVIbcU4Xo5TPODOA/pub?gid=515515953&single=true&output=csv';
         const CACHE_KEY = 'emporio_customers_cache';
+        const EXPIRED_CACHE_KEY = 'emporio_expired_cache';
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos em ms
 
         let customers = [];
+        let expiredPoints = {}; // Mapa CPF -> array de pontos expirados
         let currentCustomer = null;
         let cpfDigits = '';
         let timerInterval = null;
@@ -418,12 +436,20 @@
 
         async function initApp() {
             // Tenta carregar do cache primeiro (instantâneo)
-            const cached = loadFromCache();
+            const cached = loadFromCache(CACHE_KEY);
+            const cachedExpired = loadFromCache(EXPIRED_CACHE_KEY);
+
             if (cached && !isCacheFromAnotherDay(cached.timestamp)) {
                 customers = cached.data;
                 lastUpdate = new Date(cached.timestamp);
                 updateLastUpdateDisplay();
                 console.log('📦 Cache carregado:', customers.length, 'clientes');
+
+                // Carrega pontos expirados do cache
+                if (cachedExpired && !isCacheFromAnotherDay(cachedExpired.timestamp)) {
+                    expiredPoints = cachedExpired.data || {};
+                    console.log('📦 Cache expirados carregado');
+                }
 
                 // Atualiza em background se cache estiver antigo (mais de 5 min)
                 if (isCacheExpired(cached.timestamp)) {
@@ -435,14 +461,15 @@
                 if (cached) {
                     console.log('📅 Novo dia detectado, limpando cache antigo...');
                     localStorage.removeItem(CACHE_KEY);
+                    localStorage.removeItem(EXPIRED_CACHE_KEY);
                 }
                 await loadDataFromServer(false);
             }
         }
 
-        function loadFromCache() {
+        function loadFromCache(key) {
             try {
-                const cached = localStorage.getItem(CACHE_KEY);
+                const cached = localStorage.getItem(key);
                 if (cached) {
                     return JSON.parse(cached);
                 }
@@ -452,14 +479,14 @@
             return null;
         }
 
-        function saveToCache(data) {
+        function saveToCache(key, data) {
             try {
                 const cacheData = {
                     data: data,
                     timestamp: Date.now(),
                     date: new Date().toDateString() // Guarda a data (ex: "Mon Dec 09 2024")
                 };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+                localStorage.setItem(key, JSON.stringify(cacheData));
             } catch (e) {
                 console.error('Erro ao salvar cache:', e);
             }
@@ -485,13 +512,29 @@
             }
 
             try {
-                const response = await fetch(SHEET_URL);
-                const csv = await response.text();
+                // Carrega ambas as planilhas em paralelo
+                const [mainResponse, expiredResponse] = await Promise.all([
+                    fetch(SHEET_URL),
+                    fetch(EXPIRED_SHEET_URL).catch(e => {
+                        console.warn('⚠️ Erro ao carregar pontos expirados:', e);
+                        return null;
+                    })
+                ]);
+
+                const csv = await mainResponse.text();
                 customers = parseCSV(csv);
                 lastUpdate = new Date();
-                saveToCache(customers);
+                saveToCache(CACHE_KEY, customers);
                 updateLastUpdateDisplay();
                 console.log('✅ Servidor carregado:', customers.length, 'clientes');
+
+                // Processa pontos expirados se disponível
+                if (expiredResponse && expiredResponse.ok) {
+                    const expiredCsv = await expiredResponse.text();
+                    expiredPoints = parseExpiredCSV(expiredCsv);
+                    saveToCache(EXPIRED_CACHE_KEY, expiredPoints);
+                    console.log('✅ Pontos expirados carregados');
+                }
             } catch (error) {
                 console.error('❌ Erro ao carregar:', error);
                 if (!isBackground && customers.length === 0) {
@@ -590,6 +633,76 @@
             return result;
         }
 
+        // Parseia CSV de pontos expirados (Pagina1)
+        // Estrutura esperada: CPF, Data, Valor (ou variações)
+        function parseExpiredCSV(csv) {
+            const lines = csv.split('\n');
+            const result = {}; // Mapa CPF -> array de expirados
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            // Identifica colunas pela primeira linha (cabeçalho)
+            const header = lines[0] ? parseCSVLine(lines[0].toLowerCase()) : [];
+            let cpfCol = 0, dataCol = 1, valorCol = 2;
+
+            // Tenta identificar colunas pelo nome
+            header.forEach((col, idx) => {
+                const colLower = col.toLowerCase();
+                if (colLower.includes('cpf') || colLower.includes('documento')) cpfCol = idx;
+                if (colLower.includes('data') || colLower.includes('venc') || colLower.includes('expir')) dataCol = idx;
+                if (colLower.includes('valor') || colLower.includes('saldo') || colLower.includes('r$') || colLower.includes('pontos')) valorCol = idx;
+            });
+
+            for (let i = 1; i < lines.length; i++) {
+                const cols = parseCSVLine(lines[i].trim());
+                if (cols.length < 3) continue;
+
+                const cpfRaw = String(cols[cpfCol] || '').replace(/\D/g, '');
+                if (!cpfRaw || cpfRaw.length < 10) continue;
+
+                const cpf = cpfRaw.padStart(11, '0');
+                const dataExpiracao = parseDataBR(cols[dataCol]);
+                const valor = parseFloat(String(cols[valorCol] || '0').replace(',', '.')) || 0;
+
+                // Só inclui se a data for anterior a hoje (realmente expirado)
+                if (dataExpiracao && dataExpiracao < hoje && valor > 0) {
+                    if (!result[cpf]) {
+                        result[cpf] = [];
+                    }
+                    result[cpf].push({
+                        data: cols[dataCol],
+                        valor: valor
+                    });
+                }
+            }
+
+            // Ordena cada lista por data (mais recente primeiro)
+            Object.keys(result).forEach(cpf => {
+                result[cpf].sort((a, b) => {
+                    const dataA = parseDataBR(a.data);
+                    const dataB = parseDataBR(b.data);
+                    return (dataB || 0) - (dataA || 0);
+                });
+            });
+
+            return result;
+        }
+
+        // Retorna total de pontos expirados para um CPF
+        function getTotalExpired(cpf) {
+            const cpfNorm = String(cpf).replace(/\D/g, '').padStart(11, '0');
+            const cpfSemZeros = cpfNorm.replace(/^0+/, '');
+            const items = expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
+            return items.reduce((sum, item) => sum + item.valor, 0);
+        }
+
+        // Retorna lista de pontos expirados para um CPF
+        function getExpiredList(cpf) {
+            const cpfNorm = String(cpf).replace(/\D/g, '').padStart(11, '0');
+            const cpfSemZeros = cpfNorm.replace(/^0+/, '');
+            return expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
+        }
+
         function addDigit(d) { if (cpfDigits.length < 11) { cpfDigits += d; updateDisplay(); } }
         function backspace() { cpfDigits = cpfDigits.slice(0, -1); updateDisplay(); }
         function clearCpf() { cpfDigits = ''; updateDisplay(); }
@@ -648,13 +761,37 @@
             }
 
             // Exibir saldo expirado (se houver)
+            // Prioriza dados da segunda aba (Pagina1), fallback para coluna da planilha principal
             const expiredBox = document.getElementById('expiredBox');
             const expiredValue = document.getElementById('expiredValue');
-            if (currentCustomer.saldoExpirado > 0) {
-                expiredValue.textContent = 'R$ ' + currentCustomer.saldoExpirado.toFixed(2).replace('.', ',');
+            const expiredDetails = document.getElementById('expiredDetails');
+
+            const expiredList = getExpiredList(currentCustomer.cpf);
+            const totalFromSheet2 = getTotalExpired(currentCustomer.cpf);
+            const totalExpired = totalFromSheet2 > 0 ? totalFromSheet2 : currentCustomer.saldoExpirado;
+
+            if (totalExpired > 0) {
+                expiredValue.textContent = 'R$ ' + totalExpired.toFixed(2).replace('.', ',');
                 expiredBox.classList.remove('hidden');
+
+                // Mostra detalhes se houver lista da segunda aba
+                if (expiredDetails && expiredList.length > 0) {
+                    let detailsHtml = '';
+                    expiredList.slice(0, 5).forEach(item => { // Máximo 5 itens
+                        const dataFormatada = item.data.split(' ')[0];
+                        detailsHtml += '<div class="expired-item">📅 ' + dataFormatada + ': <strong>R$ ' + item.valor.toFixed(2).replace('.', ',') + '</strong></div>';
+                    });
+                    if (expiredList.length > 5) {
+                        detailsHtml += '<div class="expired-item">... e mais ' + (expiredList.length - 5) + ' registro(s)</div>';
+                    }
+                    expiredDetails.innerHTML = detailsHtml;
+                    expiredDetails.classList.remove('hidden');
+                } else if (expiredDetails) {
+                    expiredDetails.classList.add('hidden');
+                }
             } else {
                 expiredBox.classList.add('hidden');
+                if (expiredDetails) expiredDetails.classList.add('hidden');
             }
 
             // Frase motivacional
