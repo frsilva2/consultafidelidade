@@ -417,8 +417,11 @@
     </div>
 
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-dZZ8NwD0OBeTElWMV_6Bgjc4FOQIEr89OopYJyfckhGWmcRVIbcU4Xo5TPODOA/pub?output=csv';
-        const EXPIRED_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-dZZ8NwD0OBeTElWMV_6Bgjc4FOQIEr89OopYJyfckhGWmcRVIbcU4Xo5TPODOA/pub?gid=515515953&single=true&output=csv';
+        // ============ CONFIGURAÇÃO DA API ============
+        // Substitua pela URL do seu Google Apps Script após implantação
+        const API_URL = 'COLE_SUA_URL_DO_APPS_SCRIPT_AQUI';
+        const API_TOKEN = 'emporio2024secreto'; // Mesmo token do Apps Script
+
         const CACHE_KEY = 'emporio_customers_cache';
         const EXPIRED_CACHE_KEY = 'emporio_expired_cache';
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos em ms
@@ -512,47 +515,49 @@
             }
 
             try {
-                // Carrega ambas as planilhas em paralelo
-                const [mainResponse, expiredResponse] = await Promise.all([
-                    fetch(SHEET_URL).catch(e => {
-                        console.error('❌ Erro ao buscar planilha principal:', e);
-                        return null;
-                    }),
-                    fetch(EXPIRED_SHEET_URL).catch(e => {
-                        console.warn('⚠️ Erro ao carregar pontos expirados:', e);
-                        return null;
-                    })
-                ]);
-
-                // Verifica se a resposta principal foi bem sucedida
-                if (!mainResponse || !mainResponse.ok) {
-                    throw new Error('Planilha principal não disponível. Status: ' + (mainResponse ? mainResponse.status : 'sem resposta'));
+                // Verifica se a URL da API foi configurada
+                if (!API_URL || API_URL === 'COLE_SUA_URL_DO_APPS_SCRIPT_AQUI') {
+                    throw new Error('Configure a URL da API no código (API_URL)');
                 }
 
-                const csv = await mainResponse.text();
+                // Chama a API do Google Apps Script
+                const apiUrl = `${API_URL}?token=${encodeURIComponent(API_TOKEN)}&action=all`;
+                const response = await fetch(apiUrl).catch(e => {
+                    console.error('❌ Erro de conexão:', e);
+                    return null;
+                });
 
-                // Verifica se o CSV tem conteúdo válido
-                if (!csv || csv.trim().length < 10) {
-                    throw new Error('Dados da planilha estão vazios ou inválidos');
+                if (!response || !response.ok) {
+                    throw new Error('API não disponível. Status: ' + (response ? response.status : 'sem resposta'));
                 }
 
-                customers = parseCSV(csv);
-                lastUpdate = new Date();
-                saveToCache(CACHE_KEY, customers);
+                const result = await response.json();
+
+                // Verifica se a API retornou sucesso
+                if (!result.success) {
+                    throw new Error(result.error || 'Erro desconhecido da API');
+                }
+
+                // Processa dados de clientes
+                if (result.customers && result.customers.length > 0) {
+                    customers = result.customers.map(c => ({
+                        ...c,
+                        diasExp: calcularDiasExpiracao(parseDataBR(c.vencimento))
+                    }));
+                    saveToCache(CACHE_KEY, customers);
+                    console.log('✅ Clientes carregados:', customers.length);
+                }
+
+                // Processa dados de expirados
+                if (result.expired) {
+                    expiredPoints = result.expired;
+                    saveToCache(EXPIRED_CACHE_KEY, expiredPoints);
+                    console.log('✅ Pontos expirados carregados');
+                }
+
+                lastUpdate = new Date(result.timestamp || Date.now());
                 updateLastUpdateDisplay();
-                console.log('✅ Servidor carregado:', customers.length, 'clientes');
 
-                // Processa pontos expirados se disponível
-                if (expiredResponse && expiredResponse.ok) {
-                    const expiredCsv = await expiredResponse.text();
-                    if (expiredCsv && expiredCsv.trim().length > 10) {
-                        expiredPoints = parseExpiredCSV(expiredCsv);
-                        saveToCache(EXPIRED_CACHE_KEY, expiredPoints);
-                        console.log('✅ Pontos expirados carregados');
-                    }
-                } else {
-                    console.warn('⚠️ Planilha de expirados não disponível, usando fallback');
-                }
             } catch (error) {
                 console.error('❌ Erro ao carregar:', error.message || error);
                 if (!isBackground && customers.length === 0) {
