@@ -95,16 +95,17 @@ function getCustomersData() {
   const headers = data[0];
   const result = [];
 
-  // Mapeia colunas
+  // Mapeia colunas - Aba "vencer"
+  // CPF, Nome, E-mail, Telefone, Saldo total (pts), Saldo total (R$), Primeiro vencimento (data), Primeiro vencimento (R$), Dias Exp., Loja (código), Loja (nome)
   const colMap = {
     cpf: findColumn(headers, ['cpf', 'documento']),
     nome: findColumn(headers, ['nome', 'cliente']),
     email: findColumn(headers, ['email', 'e-mail']),
     telefone: findColumn(headers, ['telefone', 'tel', 'celular']),
-    saldoPts: findColumn(headers, ['saldo pts', 'pontos']),
-    saldoRS: findColumn(headers, ['saldo r$', 'saldo', 'valor']),
-    vencimento: findColumn(headers, ['vencimento', 'validade', 'expira']),
-    saldoExpirado: findColumn(headers, ['vencimento r$', 'expirado', 'saldo expirado'])
+    saldoPts: findColumn(headers, ['saldo total (pts)', 'saldo pts', 'pontos']),
+    saldoRS: findColumn(headers, ['saldo total (r$)', 'saldo r$', 'saldo', 'valor']),
+    vencimento: findColumn(headers, ['primeiro vencimento (data)', 'vencimento', 'validade']),
+    primeiroVencimentoRS: findColumn(headers, ['primeiro vencimento (r$)'])
   };
 
   // Processa linhas
@@ -118,7 +119,6 @@ function getCustomersData() {
         nome: row[colMap.nome] || '',
         telefone: row[colMap.telefone] || '',
         saldo: parseNumber(row[colMap.saldoRS]),
-        saldoExpirado: parseNumber(row[colMap.saldoExpirado]),
         vencimento: formatDate(row[colMap.vencimento])
       });
     }
@@ -142,12 +142,13 @@ function getExpiredData() {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  // Mapeia colunas
+  // Mapeia colunas - Aba "vencido"
+  // CPF, Nome do cliente, Email, Telefone, Saldo Atual (pontos), Saldo Atual (R$), Ticket, Data de expiração, Expirado (pontos), Expirado (R$)
   const colMap = {
     cpf: findColumn(headers, ['cpf', 'documento']),
-    nome: findColumn(headers, ['nome', 'cliente']),
-    data: findColumn(headers, ['data', 'vencimento', 'expira']),
-    valor: findColumn(headers, ['valor', 'saldo', 'r$', 'pontos'])
+    nome: findColumn(headers, ['nome do cliente', 'nome', 'cliente']),
+    data: findColumn(headers, ['data de expiração', 'data', 'vencimento', 'expira']),
+    valor: findColumn(headers, ['expirado (r$)', 'expirado r$', 'valor expirado'])
   };
 
   // Processa linhas
