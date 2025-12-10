@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdiciona suporte a CNPJ e melhora experiência do usuário\n\n- Permite consulta por CPF (11 dígitos) ou CNPJ (14 dígitos)\n- Permite colar dados diretamente no campo de pesquisa\n- Remove autoclose automático (apenas botão manual)\n- Atualiza ID da planilha Google Sheets\n- Atualiza URL da API do Google Apps Script\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(gh pr create --title \"Adiciona suporte a CNPJ e melhora experiência do usuário\" --body \"$(cat <<''EOF''\n## Summary\n- Permite consulta por CPF (11 dígitos) ou CNPJ (14 dígitos)\n- Permite colar dados diretamente no campo de pesquisa\n- Remove autoclose automático (apenas botão manual para encerrar)\n- Atualiza ID da planilha Google Sheets\n- Atualiza URL da API do Google Apps Script\n\n## Test plan\n- [ ] Testar consulta com CPF válido\n- [ ] Testar consulta com CNPJ válido\n- [ ] Testar colar CPF/CNPJ no campo\n- [ ] Verificar que o autoclose foi removido\n- [ ] Testar botão \"ENCERRAR CONSULTA\"\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\nEOF\n)\" --base main)",
+      "Bash(where gh:*)",
+      "Bash(git merge:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nCorrige função de colar CPF/CNPJ no campo de pesquisa\n\n- Captura dados diretamente do clipboard no evento paste\n- Previne comportamento padrão para processar corretamente\n- Remove setTimeout desnecessário do event listener\n- Formatação e validação funcionam imediatamente ao colar\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git fetch:*)",
+      "Bash(git commit:*)",
+      "Bash(python3:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

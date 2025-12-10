@@ -727,21 +727,27 @@
             });
         }
 
-        // Retorna total de pontos expirados para um CPF
+        // Retorna total de pontos expirados para um CPF/CNPJ
         function getTotalExpired(cpf) {
-            const cpfNorm = String(cpf).replace(/\D/g, '').padStart(11, '0');
-            const cpfSemZeros = cpfNorm.replace(/^0+/, '');
-            const items = expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
+            const digits = String(cpf).replace(/\D/g, '');
+            // Normaliza: CPF com 11 dígitos, CNPJ com 14
+            const cpfNorm = digits.length <= 11
+                ? digits.padStart(11, '0')
+                : digits.padStart(14, '0');
+            const items = expiredPoints[cpfNorm] || expiredPoints[digits] || [];
             // Filtra por segurança para garantir que só conta itens realmente expirados
             const expiredItems = filterExpiredItems(items);
             return expiredItems.reduce((sum, item) => sum + item.valor, 0);
         }
 
-        // Retorna lista de pontos expirados para um CPF
+        // Retorna lista de pontos expirados para um CPF/CNPJ
         function getExpiredList(cpf) {
-            const cpfNorm = String(cpf).replace(/\D/g, '').padStart(11, '0');
-            const cpfSemZeros = cpfNorm.replace(/^0+/, '');
-            const items = expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
+            const digits = String(cpf).replace(/\D/g, '');
+            // Normaliza: CPF com 11 dígitos, CNPJ com 14
+            const cpfNorm = digits.length <= 11
+                ? digits.padStart(11, '0')
+                : digits.padStart(14, '0');
+            const items = expiredPoints[cpfNorm] || expiredPoints[digits] || [];
             // Filtra por segurança para garantir que só retorna itens realmente expirados
             return filterExpiredItems(items);
         }
@@ -808,12 +814,19 @@
                 await loadDataFromServer(false);
             }
 
-            // Busca por CPF ou CNPJ (remove zeros à esquerda para comparação)
-            const docLimpo = cpfDigits.replace(/^0+/, '');
+            // Busca por CPF (11 dígitos) ou CNPJ (14 dígitos)
+            // Normaliza para comparação: sempre com zeros à esquerda
+            const docBusca = cpfDigits.length === 11
+                ? cpfDigits.padStart(11, '0')
+                : cpfDigits.padStart(14, '0');
+
             currentCustomer = customers.find(c => {
                 const cpfCliente = String(c.cpf).replace(/\D/g, '');
-                const cpfClienteLimpo = cpfCliente.replace(/^0+/, '');
-                return cpfCliente === cpfDigits || cpfClienteLimpo === docLimpo;
+                // Normaliza o CPF do cliente para o mesmo tamanho
+                const cpfNorm = cpfCliente.length <= 11
+                    ? cpfCliente.padStart(11, '0')
+                    : cpfCliente.padStart(14, '0');
+                return cpfNorm === docBusca;
             });
 
             // Tempo reduzido para 300ms (era 800ms)
