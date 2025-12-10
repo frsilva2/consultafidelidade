@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Mensagens WhatsApp | Empório Tecidos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --rosa: #EE2B68;
+            --azul: #2F3685;
+            --rosa-claro: #FFDCEA;
+            --verde: #25D366;
+        }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .header {
+            background: linear-gradient(135deg, var(--azul), #4a4fb5);
+            color: #fff;
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .header p { opacity: 0.9; }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            color: var(--azul);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--rosa-claro);
+        }
+
+        /* Filtros */
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .filter-group { flex: 1; min-width: 150px; }
+        .filter-group label {
+            display: block;
+            font-weight: 700;
+            color: var(--azul);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: var(--rosa);
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: var(--rosa);
+            color: #fff;
+        }
+        .btn-primary:hover { background: #d62560; }
+
+        /* Templates */
+        .template-group { margin-bottom: 15px; }
+        .template-group label {
+            display: block;
+            font-weight: 700;
+            color: var(--azul);
+            margin-bottom: 5px;
+        }
+        .template-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+        }
+        .template-group textarea:focus {
+            outline: none;
+            border-color: var(--rosa);
+        }
+        .template-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .template-vars {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .template-vars span {
+            background: var(--rosa-claro);
+            color: var(--azul);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .stat-box {
+            background: var(--rosa-claro);
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-box .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--rosa);
+        }
+        .stat-box .label {
+            font-size: 0.85rem;
+            color: var(--azul);
+        }
+
+        /* Tabela */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: var(--azul);
+            color: #fff;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover { background: #f9f9f9; }
+        .valor { font-weight: 700; color: var(--rosa); }
+        .dias { font-weight: 700; }
+        .dias.urgente { color: #c00; }
+        .dias.alerta { color: #f90; }
+        .dias.ok { color: #28a745; }
+
+        .btn-whatsapp {
+            background: var(--verde);
+            color: #fff;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-whatsapp:hover { background: #20ba5a; }
+        .btn-copy {
+            background: var(--azul);
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .btn-copy:hover { background: #3d4399; }
+
+        .actions { display: flex; gap: 8px; }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--rosa-claro);
+            border-top-color: var(--rosa);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success { background: #28a745; }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .filters { flex-direction: column; }
+            .filter-group { min-width: 100%; }
+            .stats { flex-direction: column; }
+            .actions { flex-direction: column; }
+            th, td { padding: 8px 6px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Gerador de Mensagens WhatsApp</h1>
+            <p>Empório Tecidos - Painel Administrativo</p>
+        </div>
+
+        <!-- Templates de Mensagem -->
+        <div class="card">
+            <h2>📝 Templates de Mensagem</h2>
+            <div class="template-group">
+                <label>Mensagem para Saldo a Vencer:</label>
+                <textarea id="templateVencer">Oi {NOME}! 😊
+
+Aqui é o Felipe da Empório Tecidos!
+
+Você tem *R$ {SALDO}* de cashback para usar com a gente! 💰
+
+⚠️ *Atenção:* seu saldo expira em *{DIAS} dias* ({DATA_VENCIMENTO})!
+
+Corre pra não perder! Estamos te esperando! 🧵💕
+
+_*Compra mínima para resgate: R$ 50,00_
+_*O resgate do cashback é de 25% sobre o valor total da compra_</textarea>
+                <div class="template-vars">
+                    <span>{NOME}</span>
+                    <span>{SALDO}</span>
+                    <span>{DIAS}</span>
+                    <span>{DATA_VENCIMENTO}</span>
+                </div>
+            </div>
+            <div class="template-group">
+                <label>Mensagem para Saldo Vencido:</label>
+                <textarea id="templateVencido">Oi {NOME}! 😊
+
+Aqui é o Felipe da Empório Tecidos!
+
+Passando pra avisar que você tinha *R$ {SALDO}* de cashback que expirou em {DATA_VENCIMENTO}. 😢
+
+Mas não se preocupe! Converse com nosso gerente, talvez seja possível reativar seu saldo! 🙏
+
+Venha nos visitar! 🧵💕
+
+_*Compra mínima para resgate: R$ 50,00_
+_*O resgate do cashback é de 25% sobre o valor total da compra_</textarea>
+                <div class="template-vars">
+                    <span>{NOME}</span>
+                    <span>{SALDO}</span>
+                    <span>{DATA_VENCIMENTO}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card">
+            <h2>🔍 Filtros</h2>
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Tipo:</label>
+                    <select id="filterTipo">
+                        <option value="vencer">Saldo a Vencer</option>
+                        <option value="vencido">Saldo Vencido</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Dias para Vencer (máx):</label>
+                    <input type="number" id="filterDias" value="30" min="1" max="365">
+                </div>
+                <div class="filter-group">
+                    <label>Saldo Mínimo (R$):</label>
+                    <input type="number" id="filterSaldo" value="10" min="0" step="0.01">
+                </div>
+                <button class="btn btn-primary" onclick="aplicarFiltros()">Filtrar</button>
+            </div>
+        </div>
+
+        <!-- Resultados -->
+        <div class="card">
+            <h2>📋 Clientes</h2>
+            <div class="stats" id="stats">
+                <div class="stat-box">
+                    <div class="number" id="statTotal">0</div>
+                    <div class="label">Clientes</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number" id="statSaldo">R$ 0</div>
+                    <div class="label">Total em Saldo</div>
+                </div>
+            </div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div>Carregando dados...</div>
+            </div>
+            <div class="table-container" id="tableContainer" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Saldo</th>
+                            <th>Vencimento</th>
+                            <th>Dias</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuração da API (mesma do index.html)
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxVHmCoWOkoVObvYqaMt6lbFF9FtvzsthvFbuAAH62qb0vb1jTuPikQbV2nLTCXlI7Y/exec';
+        const API_TOKEN = 'fdadfasfasgasgasgasgasgfsa';
+
+        let customers = [];
+        let expiredData = {};
+        let expiredCustomers = [];
+
+        // Inicialização
+        window.onload = () => loadData();
+
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}?token=${API_TOKEN}&action=all`);
+                const result = await response.json();
+
+                if (result.success) {
+                    customers = result.customers || [];
+                    expiredData = result.expired || {};
+                    expiredCustomers = result.expiredCustomers || [];
+                    console.log('Dados carregados:', customers.length, 'clientes');
+                    aplicarFiltros();
+                } else {
+                    showToast('Erro ao carregar dados: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro de conexão com a API');
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tableContainer').style.display = 'block';
+        }
+
+        function aplicarFiltros() {
+            const tipo = document.getElementById('filterTipo').value;
+            const diasMax = parseInt(document.getElementById('filterDias').value) || 30;
+            const saldoMin = parseFloat(document.getElementById('filterSaldo').value) || 0;
+
+            let lista = [];
+
+            if (tipo === 'vencer') {
+                // Clientes com saldo a vencer
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+
+                lista = customers
+                    .filter(c => {
+                        if (!c.vencimento || c.saldo < saldoMin) return false;
+                        if (!telefoneValido(c.telefone)) return false;
+                        const dias = calcularDias(c.vencimento);
+                        return dias > 0 && dias <= diasMax;
+                    })
+                    .map(c => ({
+                        nome: c.nome,
+                        telefone: c.telefone,
+                        saldo: c.saldo,
+                        vencimento: c.vencimento,
+                        dias: calcularDias(c.vencimento),
+                        tipo: 'vencer'
+                    }));
+
+                // Ordenar: maior saldo, depois menor dias
+                lista.sort((a, b) => {
+                    if (b.saldo !== a.saldo) return b.saldo - a.saldo;
+                    return a.dias - b.dias;
+                });
+
+            } else {
+                // Clientes com saldo vencido
+                lista = [];
+
+                for (const cpf in expiredData) {
+                    const items = expiredData[cpf];
+                    if (!items || items.length === 0) continue;
+
+                    // Soma total expirado
+                    const totalExpirado = items.reduce((sum, item) => sum + item.valor, 0);
+                    if (totalExpirado < saldoMin) continue;
+
+                    // Encontra cliente (pode estar em customers ou expiredCustomers)
+                    let cliente = customers.find(c => c.cpf === cpf);
+                    if (!cliente) {
+                        cliente = expiredCustomers.find(c => c.cpf === cpf);
+                    }
+
+                    if (!cliente || !telefoneValido(cliente.telefone)) continue;
+
+                    // Pega a data mais recente de expiração
+                    const ultimaData = items.reduce((max, item) => {
+                        const d = parseDataBR(item.data);
+                        return d > max ? d : max;
+                    }, new Date(0));
+
+                    lista.push({
+                        nome: cliente.nome,
+                        telefone: cliente.telefone,
+                        saldo: totalExpirado,
+                        vencimento: formatDataBR(ultimaData),
+                        dias: calcularDiasPassados(ultimaData),
+                        tipo: 'vencido'
+                    });
+                }
+
+                // Ordenar: maior saldo
+                lista.sort((a, b) => b.saldo - a.saldo);
+            }
+
+            renderTabela(lista);
+        }
+
+        function renderTabela(lista) {
+            const tbody = document.getElementById('tableBody');
+            const totalSaldo = lista.reduce((sum, c) => sum + c.saldo, 0);
+
+            document.getElementById('statTotal').textContent = lista.length;
+            document.getElementById('statSaldo').textContent = 'R$ ' + totalSaldo.toFixed(2).replace('.', ',');
+
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#666;">Nenhum cliente encontrado com os filtros selecionados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lista.map(c => {
+                const diasClass = c.tipo === 'vencer'
+                    ? (c.dias <= 3 ? 'urgente' : c.dias <= 7 ? 'alerta' : 'ok')
+                    : 'urgente';
+                const diasText = c.tipo === 'vencer'
+                    ? c.dias + ' dia(s)'
+                    : 'Há ' + c.dias + ' dia(s)';
+
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(c.nome)}</strong></td>
+                        <td>${formatTelefone(c.telefone)}</td>
+                        <td class="valor">R$ ${c.saldo.toFixed(2).replace('.', ',')}</td>
+                        <td>${c.vencimento}</td>
+                        <td class="dias ${diasClass}">${diasText}</td>
+                        <td class="actions">
+                            <button class="btn-whatsapp" onclick="abrirWhatsApp('${escapeJs(c.nome)}', '${c.telefone}', ${c.saldo}, '${c.vencimento}', ${c.dias}, '${c.tipo}')">
+                                📱 WhatsApp
+                            </button>
+                            <button class="btn-copy" onclick="copiarMensagem('${escapeJs(c.nome)}', ${c.saldo}, '${c.vencimento}', ${c.dias}, '${c.tipo}')">
+                                📋 Copiar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function gerarMensagem(nome, saldo, vencimento, dias, tipo) {
+            const template = tipo === 'vencer'
+                ? document.getElementById('templateVencer').value
+                : document.getElementById('templateVencido').value;
+
+            const primeiroNome = nome.split(' ')[0];
+            const primeiroNomeFormatado = primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+
+            return template
+                .replace(/{NOME}/g, primeiroNomeFormatado)
+                .replace(/{SALDO}/g, saldo.toFixed(2).replace('.', ','))
+                .replace(/{DIAS}/g, dias)
+                .replace(/{DATA_VENCIMENTO}/g, vencimento);
+        }
+
+        function abrirWhatsApp(nome, telefone, saldo, vencimento, dias, tipo) {
+            const mensagem = gerarMensagem(nome, saldo, vencimento, dias, tipo);
+            const tel = String(telefone).replace(/\D/g, '');
+            const telFormatado = tel.startsWith('55') ? tel : '55' + tel;
+            const url = `https://wa.me/${telFormatado}?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+
+        function copiarMensagem(nome, saldo, vencimento, dias, tipo) {
+            const mensagem = gerarMensagem(nome, saldo, vencimento, dias, tipo);
+            navigator.clipboard.writeText(mensagem).then(() => {
+                showToast('Mensagem copiada!', 'success');
+            }).catch(() => {
+                showToast('Erro ao copiar');
+            });
+        }
+
+        // Funções auxiliares
+        function calcularDias(dataStr) {
+            const partes = dataStr.split('/');
+            if (partes.length !== 3) return 999;
+            const data = new Date(partes[2], partes[1] - 1, partes[0]);
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            return Math.ceil((data - hoje) / (1000 * 60 * 60 * 24));
+        }
+
+        function calcularDiasPassados(data) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            return Math.floor((hoje - data) / (1000 * 60 * 60 * 24));
+        }
+
+        function parseDataBR(dataStr) {
+            const partes = dataStr.split('/');
+            if (partes.length !== 3) return new Date(0);
+            return new Date(partes[2], partes[1] - 1, partes[0]);
+        }
+
+        function formatDataBR(data) {
+            const d = String(data.getDate()).padStart(2, '0');
+            const m = String(data.getMonth() + 1).padStart(2, '0');
+            const y = data.getFullYear();
+            return `${d}/${m}/${y}`;
+        }
+
+        function telefoneValido(tel) {
+            if (!tel) return false;
+            const digitos = String(tel).replace(/\D/g, '');
+            if (digitos.length < 10 || digitos.length > 11) return false;
+            if (/^0+$/.test(digitos)) return false;
+            return true;
+        }
+
+        function formatTelefone(tel) {
+            const d = String(tel).replace(/\D/g, '');
+            if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+            if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+            return tel;
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        function escapeJs(str) {
+            return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        function showToast(msg, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast show' + (type ? ' ' + type : '');
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+    </script>
+</body>
+</html>
