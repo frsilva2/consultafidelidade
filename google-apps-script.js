@@ -149,9 +149,12 @@ function getExpiredData() {
   const colMap = {
     cpf: findColumn(headers, ['cpf', 'documento']),
     nome: findColumn(headers, ['nome do cliente', 'nome', 'cliente']),
+    ticket: findColumn(headers, ['ticket']),
     data: findColumn(headers, ['data de expiração', 'data', 'vencimento', 'expira']),
     valor: findColumn(headers, ['expirado (r$)', 'expirado r$', 'valor expirado'])
   };
+
+  const ticketsProcessados = {}; // Para evitar duplicação por ticket
 
   // Processa linhas
   for (let i = 1; i < data.length; i++) {
@@ -162,6 +165,7 @@ function getExpiredData() {
       // Normaliza: CPF com 11 dígitos, CNPJ com 14
       const cpfNorm = cpf.length <= 11 ? cpf.padStart(11, '0') : cpf.padStart(14, '0');
       const nome = row[colMap.nome] || '';
+      const ticket = String(row[colMap.ticket] || '');
       const dataExp = parseDate(row[colMap.data]);
       const valor = parseNumber(row[colMap.valor]);
 
@@ -171,14 +175,19 @@ function getExpiredData() {
       }
 
       // Só inclui nos itens expirados se data < hoje e valor > 0
+      // Usa ticket para evitar duplicação
       if (dataExp && dataExp < hoje && valor > 0) {
-        if (!items[cpfNorm]) {
-          items[cpfNorm] = [];
+        const ticketKey = cpfNorm + '_' + ticket;
+        if (!ticketsProcessados[ticketKey]) {
+          ticketsProcessados[ticketKey] = true;
+          if (!items[cpfNorm]) {
+            items[cpfNorm] = [];
+          }
+          items[cpfNorm].push({
+            data: formatDate(row[colMap.data]),
+            valor: valor
+          });
         }
-        items[cpfNorm].push({
-          data: formatDate(row[colMap.data]),
-          valor: valor
-        });
       }
     }
   }
