@@ -698,19 +698,33 @@
             return result;
         }
 
+        // Filtra itens que realmente expiraram (data < hoje)
+        function filterExpiredItems(items) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            return items.filter(item => {
+                const dataExp = parseDataBR(item.data);
+                return dataExp && dataExp < hoje && item.valor > 0;
+            });
+        }
+
         // Retorna total de pontos expirados para um CPF
         function getTotalExpired(cpf) {
             const cpfNorm = String(cpf).replace(/\D/g, '').padStart(11, '0');
             const cpfSemZeros = cpfNorm.replace(/^0+/, '');
             const items = expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
-            return items.reduce((sum, item) => sum + item.valor, 0);
+            // Filtra por segurança para garantir que só conta itens realmente expirados
+            const expiredItems = filterExpiredItems(items);
+            return expiredItems.reduce((sum, item) => sum + item.valor, 0);
         }
 
         // Retorna lista de pontos expirados para um CPF
         function getExpiredList(cpf) {
             const cpfNorm = String(cpf).replace(/\D/g, '').padStart(11, '0');
             const cpfSemZeros = cpfNorm.replace(/^0+/, '');
-            return expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
+            const items = expiredPoints[cpfNorm] || expiredPoints[cpfSemZeros] || [];
+            // Filtra por segurança para garantir que só retorna itens realmente expirados
+            return filterExpiredItems(items);
         }
 
         function addDigit(d) { if (cpfDigits.length < 14) { cpfDigits += d; updateDisplay(); } }
