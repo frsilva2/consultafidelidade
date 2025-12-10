@@ -71,36 +71,20 @@
         }
         .btn-main:disabled { background: #ccc; }
         
-        .greeting { color: var(--azul); font-size: 1.5rem; font-weight: 600; }
-        .customer-name { color: var(--rosa); font-size: 2rem; font-weight: 800; margin-bottom: 25px; }
+        .customer-name { color: var(--rosa); font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
         .balance-box {
             background: linear-gradient(135deg, var(--rosa), #ff6b9d);
-            border-radius: 16px; padding: 25px; margin-bottom: 20px;
+            border-radius: 20px; padding: 30px 20px; margin-bottom: 20px;
         }
-        .balance-label { color: rgba(255,255,255,0.9); font-size: 1.2rem; }
-        .balance-value { color: #fff; font-size: 3.5rem; font-weight: 800; }
+        .balance-label { color: rgba(255,255,255,0.95); font-size: 1.3rem; font-weight: 600; }
+        .balance-value { color: #fff; font-size: 4.5rem; font-weight: 800; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
         .expiry-box {
-            background: var(--rosa-claro); border-radius: 12px;
-            padding: 18px; margin-bottom: 25px;
+            background: var(--rosa-claro); border-radius: 16px;
+            padding: 20px; margin-bottom: 20px;
         }
-        .expiry-label { color: var(--azul); font-size: 1.1rem; }
-        .expiry-value { color: var(--rosa); font-size: 1.6rem; font-weight: 800; }
-        .expiry-warning { color: #c00; font-weight: 700; margin-top: 8px; font-size: 1.1rem; }
-
-        .motivational-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px; padding: 18px; margin-bottom: 20px;
-            color: #fff; font-size: 1.1rem; font-weight: 600;
-            text-align: center; line-height: 1.5;
-        }
-        .motivational-box.urgent {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
+        .expiry-label { color: var(--azul); font-size: 1.2rem; font-weight: 600; }
+        .expiry-value { color: var(--rosa); font-size: 2.2rem; font-weight: 800; }
+        .expiry-warning { color: #c00; font-weight: 800; margin-top: 10px; font-size: 1.2rem; }
         
         .phone-box {
             background: #f5f5f5; border-radius: 12px;
@@ -169,24 +153,24 @@
         /* Box de saldo expirado */
         .expired-box {
             background: linear-gradient(135deg, #6c757d, #495057);
-            border-radius: 12px; padding: 15px; margin-bottom: 15px;
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
             border: 2px dashed #adb5bd;
         }
         .expired-box.hidden { display: none; }
-        .expired-label { color: rgba(255,255,255,0.85); font-size: 0.95rem; }
-        .expired-value { color: #fff; font-size: 1.8rem; font-weight: 800; }
+        .expired-label { color: rgba(255,255,255,0.95); font-size: 1.1rem; font-weight: 600; }
+        .expired-value { color: #fff; font-size: 2.5rem; font-weight: 800; }
         .expired-hint {
-            color: rgba(255,255,255,0.7); font-size: 0.8rem;
-            margin-top: 8px; font-style: italic;
+            color: rgba(255,255,255,0.8); font-size: 0.9rem;
+            margin-top: 10px; font-style: italic;
         }
         .expired-details {
-            margin-top: 10px; padding-top: 10px;
+            margin-top: 12px; padding-top: 12px;
             border-top: 1px solid rgba(255,255,255,0.3);
         }
         .expired-details.hidden { display: none; }
         .expired-item {
-            color: rgba(255,255,255,0.9); font-size: 0.85rem;
-            padding: 4px 0; text-align: left;
+            color: rgba(255,255,255,0.95); font-size: 1rem;
+            padding: 5px 0; text-align: left;
         }
         .expired-item strong {
             color: #fff;
@@ -225,26 +209,23 @@
                 margin-top: 15px; border-radius: 10px;
             }
 
-            .greeting { font-size: 1.2rem; }
-            .customer-name { font-size: 1.5rem; margin-bottom: 15px; }
+            .customer-name { font-size: 1.8rem; margin-bottom: 15px; }
 
-            .balance-box { padding: 18px; border-radius: 12px; margin-bottom: 15px; }
-            .balance-label { font-size: 1rem; }
-            .balance-value { font-size: 2.5rem; }
+            .balance-box { padding: 25px 15px; border-radius: 16px; margin-bottom: 15px; }
+            .balance-label { font-size: 1.1rem; }
+            .balance-value { font-size: 3.5rem; }
 
-            .expiry-box { padding: 14px; margin-bottom: 15px; }
-            .expiry-label { font-size: 0.95rem; }
-            .expiry-value { font-size: 1.3rem; }
-            .expiry-warning { font-size: 0.95rem; }
+            .expiry-box { padding: 18px; margin-bottom: 15px; border-radius: 14px; }
+            .expiry-label { font-size: 1.1rem; }
+            .expiry-value { font-size: 1.8rem; }
+            .expiry-warning { font-size: 1.1rem; }
 
-            .expired-box { padding: 12px; margin-bottom: 12px; }
-            .expired-label { font-size: 0.85rem; }
-            .expired-value { font-size: 1.5rem; }
-            .expired-hint { font-size: 0.75rem; }
-            .expired-details { margin-top: 8px; padding-top: 8px; }
-            .expired-item { font-size: 0.8rem; padding: 3px 0; }
-
-            .motivational-box { padding: 14px; font-size: 0.95rem; margin-bottom: 15px; }
+            .expired-box { padding: 18px; margin-bottom: 15px; border-radius: 14px; }
+            .expired-label { font-size: 1rem; }
+            .expired-value { font-size: 2rem; }
+            .expired-hint { font-size: 0.85rem; }
+            .expired-details { margin-top: 10px; padding-top: 10px; }
+            .expired-item { font-size: 0.95rem; padding: 4px 0; }
 
             .phone-box { padding: 15px; margin-bottom: 15px; }
             .phone-label { font-size: 0.9rem; }
@@ -357,7 +338,6 @@
 
         <div id="screenResult" class="screen">
             <div class="card">
-                <div class="greeting">Olá,</div>
                 <div class="customer-name" id="customerName"></div>
                 <div class="balance-box">
                     <div class="balance-label">Seu saldo disponível:</div>
@@ -369,12 +349,11 @@
                     <div class="expiry-warning" id="expiryWarning"></div>
                 </div>
                 <div class="expired-box hidden" id="expiredBox">
-                    <div class="expired-label">💤 Saldo não utilizado (expirado):</div>
+                    <div class="expired-label">💤 Saldo expirado:</div>
                     <div class="expired-value" id="expiredValue">R$ 0,00</div>
                     <div class="expired-details hidden" id="expiredDetails"></div>
                     <div class="expired-hint">Consulte o gerente para possível reativação</div>
                 </div>
-                <div class="motivational-box" id="motivationalBox"></div>
                 <div class="phone-box">
                     <div class="phone-alert hidden" id="phoneAlert">⚠️ Telefone não cadastrado! Por favor, atualize seus dados.</div>
                     <div class="phone-label">Seu telefone cadastrado:</div>
@@ -895,12 +874,6 @@
                 if (expiredDetails) expiredDetails.classList.add('hidden');
             }
 
-            // Frase motivacional
-            const motBox = document.getElementById('motivationalBox');
-            const { frase, urgente } = getFraseMotivacional(currentCustomer.saldo, diasExp);
-            motBox.textContent = frase;
-            motBox.classList.toggle('urgent', urgente);
-
             const temTelefone = telefoneValido(currentCustomer.telefone);
             document.getElementById('phoneDisplay').textContent = temTelefone ? formatPhone(currentCustomer.telefone) : 'Não cadastrado';
             document.getElementById('phoneAlert').classList.toggle('hidden', temTelefone);
@@ -910,42 +883,6 @@
 
             showScreen('screenResult');
             // Timer removido - apenas botão manual para encerrar
-        }
-
-        function getFraseMotivacional(saldo, diasExp) {
-            // Frases urgentes (vence em breve)
-            if (diasExp <= 0) {
-                return { frase: '😢 Que pena! Seu cashback expirou. Mas não desanime, continue comprando para acumular mais! 💪', urgente: true };
-            }
-            if (diasExp <= 3) {
-                return { frase: '🚨 URGENTE! Só restam ' + diasExp + ' dia(s)! Use seu cashback HOJE e aproveite esse presentinho! 🎁', urgente: true };
-            }
-            if (diasExp <= 7) {
-                return { frase: '⏰ O tempo está passando! Faltam ' + diasExp + ' dias para usar seu cashback. Venha nos visitar! 🛍️', urgente: true };
-            }
-            if (diasExp <= 15) {
-                return { frase: '📅 Seu cashback vence em ' + diasExp + ' dias. Que tal escolher aquele tecido lindo que você viu? ✨', urgente: false };
-            }
-
-            // Frases baseadas no valor do saldo
-            if (saldo >= 100) {
-                return { frase: '🤩 Uau! Você tem um saldo incrível! Que tal transformar em lindos tecidos para seu próximo projeto? 🧵💖', urgente: false };
-            }
-            if (saldo >= 50) {
-                return { frase: '💰 Você tem um ótimo cashback acumulado! Use na sua próxima compra e economize! 🎉', urgente: false };
-            }
-            if (saldo >= 20) {
-                return { frase: '🌟 Seu cashback está esperando por você! Aproveite esse desconto especial nas suas compras! 💝', urgente: false };
-            }
-
-            // Frases genéricas
-            const frasesGenericas = [
-                '💕 Obrigada por fazer parte da família Empório Tecidos! Volte sempre! 🏠',
-                '✨ Cada compra rende mais cashback! Continue acumulando e economizando! 💰',
-                '🎀 Seu cashback é um presente nosso para você! Use e aproveite! 🎁',
-                '🧵 Transforme seu cashback em lindos tecidos! Estamos esperando sua visita! 💖'
-            ];
-            return { frase: frasesGenericas[Math.floor(Math.random() * frasesGenericas.length)], urgente: false };
         }
 
         function formatPhone(p) {
