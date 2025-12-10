@@ -343,9 +343,7 @@
                 <script>
                     // Permite colar e digitar diretamente no campo
                     document.getElementById('cpfInput').addEventListener('input', handlePaste);
-                    document.getElementById('cpfInput').addEventListener('paste', function(e) {
-                        setTimeout(handlePaste, 10);
-                    });
+                    document.getElementById('cpfInput').addEventListener('paste', handlePaste);
                 </script>
             </div>
         </div>
@@ -720,13 +718,22 @@
         function clearCpf() { cpfDigits = ''; updateDisplay(); }
 
         // Função para tratar dados colados ou digitados diretamente
-        function handlePaste() {
+        function handlePaste(e) {
             const input = document.getElementById('cpfInput');
-            const rawValue = input.value.replace(/\D/g, '');
-            if (rawValue.length > 0) {
-                cpfDigits = rawValue.slice(0, 14); // Máximo 14 dígitos (CNPJ)
-                updateDisplay();
+            let rawValue = '';
+
+            // Se for evento de paste, pega do clipboard
+            if (e && e.type === 'paste' && e.clipboardData) {
+                e.preventDefault();
+                rawValue = e.clipboardData.getData('text').replace(/\D/g, '');
+            } else {
+                // Evento input normal
+                rawValue = input.value.replace(/\D/g, '');
             }
+
+            // Atualiza os dígitos (máximo 14 para CNPJ)
+            cpfDigits = rawValue.slice(0, 14);
+            updateDisplay();
         }
 
         function formatCpfCnpj(digits) {
