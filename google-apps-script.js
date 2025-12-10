@@ -114,8 +114,10 @@ function getCustomersData() {
     const cpf = String(row[colMap.cpf] || '').replace(/\D/g, '');
 
     if (cpf.length >= 10) {
+      // Normaliza: CPF com 11 dígitos, CNPJ com 14
+      const cpfNorm = cpf.length <= 11 ? cpf.padStart(11, '0') : cpf.padStart(14, '0');
       result.push({
-        cpf: cpf.padStart(11, '0'),
+        cpf: cpfNorm,
         nome: row[colMap.nome] || '',
         telefone: row[colMap.telefone] || '',
         saldo: parseNumber(row[colMap.saldoRS]),
@@ -157,7 +159,8 @@ function getExpiredData() {
     const cpf = String(row[colMap.cpf] || '').replace(/\D/g, '');
 
     if (cpf.length >= 10) {
-      const cpfNorm = cpf.padStart(11, '0');
+      // Normaliza: CPF com 11 dígitos, CNPJ com 14
+      const cpfNorm = cpf.length <= 11 ? cpf.padStart(11, '0') : cpf.padStart(14, '0');
       const nome = row[colMap.nome] || '';
       const dataExp = parseDate(row[colMap.data]);
       const valor = parseNumber(row[colMap.valor]);
