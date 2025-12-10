@@ -812,14 +812,18 @@
             }
 
             // Exibir saldo expirado (se houver)
-            // Prioriza dados da segunda aba (Pagina1), fallback para coluna da planilha principal
+            // Só mostra como expirado se realmente a data já passou (diasExp <= 0)
+            // OU se houver dados na aba de vencidos
             const expiredBox = document.getElementById('expiredBox');
             const expiredValue = document.getElementById('expiredValue');
             const expiredDetails = document.getElementById('expiredDetails');
 
             const expiredList = getExpiredList(currentCustomer.cpf);
             const totalFromSheet2 = getTotalExpired(currentCustomer.cpf);
-            const totalExpired = totalFromSheet2 > 0 ? totalFromSheet2 : currentCustomer.saldoExpirado;
+
+            // Só usa saldoExpirado da planilha principal se o cashback realmente expirou (data < hoje)
+            const saldoExpiradoPrincipal = (diasExp <= 0 && currentCustomer.saldoExpirado > 0) ? currentCustomer.saldoExpirado : 0;
+            const totalExpired = totalFromSheet2 > 0 ? totalFromSheet2 : saldoExpiradoPrincipal;
 
             if (totalExpired > 0) {
                 expiredValue.textContent = 'R$ ' + totalExpired.toFixed(2).replace('.', ',');
